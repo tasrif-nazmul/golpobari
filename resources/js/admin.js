@@ -27,9 +27,30 @@ Alpine.data('confirmHost', () => ({
     cancel() { this.open = false; this.form = null; },
 }));
 
-Alpine.data('copyText', (value) => ({
+async function copyToClipboard(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+        // Older phones / http: fall back to a hidden textarea.
+        const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} t.remove(); return ok;
+    }
+}
+
+Alpine.data('copyText', (value, toast = 'Copied') => ({
     copied: false,
-    async copy() { try { await navigator.clipboard.writeText(value); } catch (e) {} this.copied = true; setTimeout(() => (this.copied = false), 1500); },
+    async copy(v) {
+        await copyToClipboard(v ?? value);
+        this.copied = true; window.dispatchEvent(new CustomEvent('toast', { detail: toast }));
+        setTimeout(() => (this.copied = false), 1500);
+    },
+}));
+
+// Native share sheet on phones (WhatsApp, Messenger…), copy elsewhere.
+Alpine.data('shareLink', (url, text) => ({
+    canShare: !!navigator.share,
+    async share() {
+        if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+        await copyToClipboard(text + ' ' + url); window.dispatchEvent(new CustomEvent('toast', { detail: 'Message copied' }));
+    },
 }));
 
 // Template field editor (admin > templates)

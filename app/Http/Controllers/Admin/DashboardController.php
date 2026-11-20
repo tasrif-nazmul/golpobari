@@ -38,12 +38,37 @@ class DashboardController extends Controller
             'coupon_uses' => CouponUsage::count(),
         ];
 
+        // The work queue: each list is one step of the daily flow, oldest first so nobody waits too long.
+        $toVerify = Payment::with('order:id,order_number,customer_name,customer_phone,final_price,template_id,created_at', 'order.template:id,name')
+            ->where('status', PaymentStatus::Pending)->oldest()->limit(10)->get();
+        $dupes = Payment::whereIn('transaction_id', $toVerify->pluck('transaction_id'))
+            ->select('transaction_id')->groupBy('transaction_id')->havingRaw('count(*) > 1')->pluck('transaction_id')->all();
+
+        $toCreate = Order::with('template:id,name')
+            ->whereIn('status', [OrderStatus::PaymentVerified, OrderStatus::InReview])->doesntHave('page')
+            ->oldest()->limit(10)->get();
+
+        $toFinish = Page::with(['order:id,order_number,customer_name,customer_phone', 'template:id,name'])
+            ->whereIn('status', [PageStatus::Draft, PageStatus::Pending])->whereNotNull('order_id')
+            ->orderByRaw('status = ? desc', [PageStatus::Pending->value])->oldest('updated_at')->limit(10)->get();
+
+        $justLive = Page::with('order:id,order_number,customer_name,customer_phone')
+            ->where('status', PageStatus::Active)->whereNotNull('order_id')
+            ->where('published_at', '>=', now()->subDays(3))->latest('published_at')->limit(6)->get();
+
         return view('admin.dashboard', [
             'stats' => $stats,
             'revenue' => compact('verified', 'pending', 'refunded', 'discounts', 'month'),
             'actions' => AdminStats::pendingActions(),
-            'recent' => Order::with(['payment', 'template'])->latest('id')->limit(8)->get(),
-            'expiring' => Page::expiringSoon((int) config('golpobari.expiring_soon_days', 7))->orderBy('expires_at')->limit(5)->get(),
+            'toVerify' => $toVerify,
+            'dupes' => $dupes,
+            'toCreate' => $toCreate,
+            'toFinish' => $toFinish,
+            'justLive' => $justLive,
+            'recent' => Order::with(['payment', 'template'])->latest('id')->limit(6)->get(),
+            'expiring' => Page::with('order:id,customer_name,customer_phone')->expiringSoon((int) config('golpobari.expiring_soon_days', 7))->orderBy('expires_at')->limit(6)->get(),
+            'today' => Order::where('created_at', '>=', now()->startOfDay())->count(),
+            'finishCount' => Page::whereIn('status', [PageStatus::Draft, PageStatus::Pending])->whereNotNull('order_id')->count(),
         ]);
     }
 }

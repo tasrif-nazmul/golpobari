@@ -4,24 +4,55 @@
 @php use App\Enums\PageStatus; use App\Enums\PageVisibility; @endphp
 <x-admin.header title="Customer pages" :sub="$pages->total().' pages'" />
 
-<div class="mb-3 flex flex-wrap gap-2">
-    <a href="{{ route('admin.pages.index') }}" class="a-btn a-btn-sm {{ $tab === 'all' ? 'a-btn-primary' : 'a-btn-ghost' }}">All <span class="opacity-60">{{ $counts->sum() }}</span></a>
+<nav class="a-scroll mb-4" aria-label="Page status">
+    <a href="{{ route('admin.pages.index') }}" class="a-chip" aria-current="{{ $tab === 'all' ? 'true' : 'false' }}">All <span class="n">{{ $counts->sum() }}</span></a>
     @foreach (PageStatus::cases() as $s)
-        <a href="{{ route('admin.pages.index', ['tab' => $s->value]) }}" class="a-btn a-btn-sm {{ $tab === $s->value ? 'a-btn-primary' : 'a-btn-ghost' }}">{{ $s->label() }} <span class="opacity-60">{{ $counts[$s->value] ?? 0 }}</span></a>
+        <a href="{{ route('admin.pages.index', ['tab' => $s->value]) }}" class="a-chip" aria-current="{{ $tab === $s->value ? 'true' : 'false' }}">{{ ['draft' => 'Drafts', 'pending' => 'Ready to publish', 'active' => 'Live'][$s->value] ?? $s->label() }} <span class="n {{ in_array($s->value, ['draft', 'pending'], true) && ($counts[$s->value] ?? 0) && $tab !== $s->value ? 'hot' : '' }}">{{ $counts[$s->value] ?? 0 }}</span></a>
     @endforeach
-    <a href="{{ route('admin.pages.index', ['tab' => 'expiring']) }}" class="a-btn a-btn-sm {{ $tab === 'expiring' ? 'a-btn-primary' : 'a-btn-ghost' }}">Expiring soon <span class="{{ $expiringCount ? 'text-orange-500' : 'opacity-60' }}">{{ $expiringCount }}</span></a>
-</div>
+    <a href="{{ route('admin.pages.index', ['tab' => 'expiring']) }}" class="a-chip" aria-current="{{ $tab === 'expiring' ? 'true' : 'false' }}">Ending soon <span class="n {{ $expiringCount && $tab !== 'expiring' ? 'hot' : '' }}">{{ $expiringCount }}</span></a>
+</nav>
 
-<form method="GET" class="a-card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6">
+<form method="GET" class="a-card mb-4 grid gap-3 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-6" x-data="{ more: {{ collect(['category', 'template', 'visibility'])->contains(fn ($k) => filled(request($k))) ? 'true' : 'false' }} }">
     <input type="hidden" name="tab" value="{{ $tab }}">
-    <input name="q" value="{{ request('q') }}" class="a-input lg:col-span-2" placeholder="Slug, title, order ID, customer">
-    <select name="category" class="a-input"><option value="">All categories</option>@foreach ($categories as $id => $n)<option value="{{ $id }}" @selected((string) request('category') === (string) $id)>{{ $n }}</option>@endforeach</select>
-    <select name="template" class="a-input"><option value="">All templates</option>@foreach ($templates as $id => $n)<option value="{{ $id }}" @selected((string) request('template') === (string) $id)>{{ $n }}</option>@endforeach</select>
-    <select name="visibility" class="a-input"><option value="">Any visibility</option>@foreach (PageVisibility::options() as $k => $v)<option value="{{ $k }}" @selected(request('visibility') === $k)>{{ $v }}</option>@endforeach</select>
-    <div class="flex gap-2"><button class="a-btn a-btn-primary flex-1">Filter</button>@if (request()->except(['page', 'tab']))<a href="{{ route('admin.pages.index', ['tab' => $tab]) }}" class="a-btn a-btn-ghost">Reset</a>@endif</div>
+    <div class="flex gap-2 sm:col-span-2">
+        <input name="q" value="{{ request('q') }}" class="a-input" placeholder="Link, title, order ID, customer">
+        <button type="button" class="a-btn a-btn-ghost sm:hidden" @click="more = !more" aria-label="Filters"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
+    </div>
+    <select name="category" class="a-input" :class="more || 'hidden sm:block'"><option value="">All categories</option>@foreach ($categories as $id => $n)<option value="{{ $id }}" @selected((string) request('category') === (string) $id)>{{ $n }}</option>@endforeach</select>
+    <select name="template" class="a-input" :class="more || 'hidden sm:block'"><option value="">All templates</option>@foreach ($templates as $id => $n)<option value="{{ $id }}" @selected((string) request('template') === (string) $id)>{{ $n }}</option>@endforeach</select>
+    <select name="visibility" class="a-input" :class="more || 'hidden sm:block'"><option value="">Any visibility</option>@foreach (PageVisibility::options() as $k => $v)<option value="{{ $k }}" @selected(request('visibility') === $k)>{{ $v }}</option>@endforeach</select>
+    <div class="gap-2 sm:flex" :class="more ? 'flex' : 'hidden'"><button class="a-btn a-btn-primary flex-1">Filter</button>@if (request()->except(['page', 'tab']))<a href="{{ route('admin.pages.index', ['tab' => $tab]) }}" class="a-btn a-btn-ghost">Reset</a>@endif</div>
 </form>
 
-<div class="a-card overflow-hidden">
+{{-- Phone: cards --}}
+<div class="space-y-2 md:hidden">
+    @forelse ($pages as $p)
+        <div class="a-card p-4">
+            <a href="{{ route('admin.pages.edit', $p) }}" class="block">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate font-semibold">{{ $p->order?->customer_name ?? ($p->title ?: 'Untitled') }}</p>
+                        <p class="truncate font-mono text-xs text-stone-500">/{{ $p->slug }}</p>
+                    </div>
+                    <x-admin.badge :color="$p->status->color()">{{ $p->status->label() }}</x-admin.badge>
+                </div>
+                <p class="mt-1 truncate text-sm text-stone-600">{{ $p->template?->name }}@if ($p->expires_at) · <span class="{{ $p->hasExpired() ? 'text-rose-700' : '' }}">ends {{ $p->expires_at->format('d M Y') }}</span>@endif</p>
+            </a>
+            <div class="mt-3 flex items-center justify-end gap-2 border-t border-dashed border-stone-200 pt-3">
+                @if ($p->isLive())
+                    @include('admin.partials.send-link', ['page' => $p, 'compact' => true])
+                @else
+                    <a href="{{ route('admin.pages.preview', $p) }}" target="_blank" class="a-btn a-btn-ghost a-btn-sm">Preview</a>
+                    <a href="{{ route('admin.pages.edit', $p) }}" class="a-btn a-btn-primary a-btn-sm">Edit</a>
+                @endif
+            </div>
+        </div>
+    @empty
+        <div class="a-card px-5 py-12 text-center text-sm text-stone-500">No pages here yet. Pages are made from a paid order.</div>
+    @endforelse
+</div>
+
+<div class="a-card hidden overflow-hidden md:block">
     <div class="overflow-x-auto">
         <table class="a-table">
             <thead><tr>
@@ -45,7 +76,7 @@
                     <td>{{ $p->template?->name }}<div class="text-xs text-stone-500">{{ $p->template?->category?->name }}</div></td>
                     <td>@if ($p->order)<a href="{{ route('admin.orders.show', $p->order) }}" class="font-mono text-xs hover:underline">{{ $p->order->order_number }}</a><div class="text-xs text-stone-500">{{ $p->order->customer_name }}</div>@else<span class="text-xs text-stone-400">Manual</span>@endif</td>
                     <td><x-admin.badge :color="$p->status->color()">{{ $p->status->label() }}</x-admin.badge>
-                        @if ($p->visibility !== PageVisibility::Public)<div class="mt-1 text-xs text-stone-500">{{ $p->visibility === PageVisibility::Private ? '🔒 Private' : 'Unlisted' }}</div>@endif</td>
+                        @if ($p->visibility !== PageVisibility::Public)<div class="mt-1 text-xs text-stone-500">{{ $p->visibility === PageVisibility::Private ? 'Private (code)' : 'Unlisted' }}</div>@endif</td>
                     <td class="whitespace-nowrap text-stone-500">{{ $p->published_at?->format('d M Y') ?? '—' }}</td>
                     <td class="whitespace-nowrap {{ $p->hasExpired() ? 'text-rose-600' : ($soon ? 'font-semibold text-orange-600' : 'text-stone-500') }}">
                         {{ $p->expires_at?->format('d M Y') ?? '—' }}
@@ -64,5 +95,5 @@
         </table>
     </div>
 </div>
-{{ $pages->links() }}
+<div class="mt-4">{{ $pages->links() }}</div>
 @endsection

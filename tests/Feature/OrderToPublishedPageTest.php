@@ -237,6 +237,34 @@ class OrderToPublishedPageTest extends TestCase
         $this->post(route('track.lookup'), ['order_number' => $order->order_number, 'phone' => '+8801811223344'])->assertOk()->assertSee(url('/korim-loves-mitu'));
     }
 
+    public function test_one_tap_verify_makes_the_page_and_the_dashboard_walks_each_step(): void
+    {
+        $order = $this->placeOrder();
+        $this->actingAs($this->admin(), 'admin');
+
+        // Step 1: the payment waits on the dashboard and in the "Check payment" tab.
+        $this->get(route('admin.dashboard'))->assertOk()->assertSee('BKX9A1B2C3')->assertSee('Received · make page');
+        $this->get(route('admin.orders.index', ['stage' => 'check']))->assertOk()->assertSee($order->order_number);
+        $this->get(route('admin.orders.index', ['stage' => 'live']))->assertOk()->assertDontSee($order->order_number);
+
+        // One tap: verified and a draft page, straight into the editor.
+        $res = $this->post(route('admin.payments.verify', $order->payment), ['make_page' => 1]);
+        $page = Page::where('order_id', $order->id)->firstOrFail();
+        $res->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame(PaymentStatus::Verified, $order->fresh()->payment_status);
+        $this->assertSame(PageStatus::Draft, $page->status);
+
+        // Step 3: the draft shows up to finish; then publish, and step 4 offers the WhatsApp link.
+        $this->get(route('admin.dashboard'))->assertOk()->assertSee('/'.$page->slug)->assertSee('Finish and publish');
+        $this->post(route('admin.pages.action', $page), ['action' => 'publish'])->assertSessionHas('success');
+        $this->get(route('admin.dashboard'))->assertOk()->assertSee('send the link')->assertSee('wa.me/8801811223344', false);
+        $this->get(route('admin.pages.edit', $page))->assertOk()->assertSee('Send on WhatsApp');
+        $this->get(route('admin.orders.show', $order))->assertOk()->assertSee($page->url());
+        $this->get(route('admin.orders.index', ['stage' => 'live']))->assertOk()->assertSee($order->order_number);
+        $this->get(route('admin.payments.index', ['status' => 'verified']))->assertOk()->assertSee('BKX9A1B2C3');
+        $this->get(route('admin.pages.index'))->assertOk()->assertSee($page->slug);
+    }
+
     public function test_page_expires_and_renewal_reactivates_it(): void // tests 20–22
     {
         $order = $this->placeOrder();

@@ -18,18 +18,30 @@
     $danger = ['suspend', 'archive', 'unpublish'];
 @endphp
 
-<x-admin.header :title="$page->title ?: 'Untitled page'" :sub="'/'.$page->slug.' · '.$page->template->name" :back="route('admin.pages.index')">
+<x-admin.header :title="$page->title ?: 'Untitled page'" :sub="'/'.$page->slug.' · '.$page->template->name.($page->order ? ' · '.$page->order->customer_name : '')" :back="$page->order ? route('admin.orders.show', $page->order) : route('admin.pages.index')">
     <x-slot:actions>
-        <a href="{{ route('admin.pages.preview', $page) }}" target="_blank" class="a-btn a-btn-ghost">Preview ↗</a>
-        @if ($page->isLive())<a href="{{ $page->url() }}" target="_blank" rel="noopener" class="a-btn a-btn-ghost">Open live ↗</a>@endif
+        <x-admin.badge :color="$s->color()" class="!text-sm">{{ $s->label() }}</x-admin.badge>
+        <a href="{{ route('admin.pages.preview', $page) }}" target="_blank" class="a-btn a-btn-ghost">Preview</a>
+        @if ($page->isLive())<a href="{{ $page->url() }}" target="_blank" rel="noopener" class="a-btn a-btn-ghost">Open live</a>@endif
         @foreach ($actions as $a => $label)
-            <form method="POST" action="{{ route('admin.pages.action', $page) }}" @if (in_array($a, $danger, true)) data-confirm="{{ $label }} /{{ $page->slug }}? Visitors will no longer see it." @endif>
+            @php $go = in_array($a, ['publish', 'activate'], true); @endphp
+            <form method="POST" action="{{ route('admin.pages.action', $page) }}" @if (in_array($a, $danger, true)) data-confirm="{{ $label }} /{{ $page->slug }}? Visitors will no longer see it." data-danger @elseif ($go) data-confirm="{{ $label }} /{{ $page->slug }}? Save your edits first. It goes live for everyone with the link." @endif>
                 @csrf<input type="hidden" name="action" value="{{ $a }}">
-                <button class="a-btn {{ $a === 'publish' || $a === 'activate' ? 'a-btn-success' : (in_array($a, $danger, true) ? 'a-btn-ghost' : 'a-btn-primary') }}">{{ $label }}</button>
+                <button class="a-btn {{ $go ? 'a-btn-success' : 'a-btn-ghost' }}">{{ $label }}</button>
             </form>
         @endforeach
     </x-slot:actions>
 </x-admin.header>
+
+@if ($page->isLive())
+    <div class="mb-6">@include('admin.partials.send-link', ['page' => $page])</div>
+@elseif (in_array($s, [PageStatus::Draft, PageStatus::Pending], true))
+    <ol class="mb-6 grid gap-2 text-sm sm:grid-cols-3">
+        @foreach (['Check the text and photos below', 'Save, then open Preview', 'Happy? Tap Publish'] as $n => $tip)
+            <li class="flex items-center gap-3 rounded-xl border-[1.5px] border-dashed border-stone-300 px-3 py-2.5"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-stone-900 text-xs font-bold text-white">{{ $n + 1 }}</span>{{ $tip }}</li>
+        @endforeach
+    </ol>
+@endif
 
 <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
     <div class="space-y-6">
@@ -129,9 +141,9 @@
                 </div>
             </section>
 
-            <div class="sticky bottom-0 z-10 -mx-1 flex justify-end gap-2 rounded-xl bg-stone-100/90 p-1 py-3 backdrop-blur">
-                <a href="{{ route('admin.pages.preview', $page) }}" target="_blank" class="a-btn a-btn-ghost">Preview saved version ↗</a>
-                <button class="a-btn a-btn-primary">Save changes</button>
+            <div class="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-20 flex items-center justify-end gap-2 rounded-2xl bg-card/95 p-2 shadow-lg ring-1 ring-stone-200 backdrop-blur lg:bottom-3">
+                <a href="{{ route('admin.pages.preview', $page) }}" target="_blank" class="a-btn a-btn-ghost flex-1 sm:flex-none">Preview</a>
+                <button class="a-btn a-btn-primary flex-1 sm:flex-none">Save changes</button>
             </div>
         </form>
 
@@ -183,7 +195,7 @@
         <section class="a-card p-5" x-data="copyText(@js($page->url()))">
             <div class="flex items-center justify-between"><h2 class="font-semibold">Status</h2><x-admin.badge :color="$s->color()">{{ $s->label() }}</x-admin.badge></div>
             <dl class="a-dl mt-4 space-y-3">
-                <div><dt>Address</dt><dd class="break-all font-mono">{{ $page->url() }} <button type="button" class="a-btn a-btn-ghost a-btn-sm ml-1" @click="copy()" x-text="copied ? 'Copied ✓' : 'Copy'"></button></dd></div>
+                <div><dt>Address</dt><dd class="break-all font-mono">{{ $page->url() }} <button type="button" class="a-btn a-btn-ghost a-btn-sm ml-1" @click="copy()" x-text="copied ? 'Copied' : 'Copy'"></button></dd></div>
                 <div><dt>Visibility</dt><dd>{{ $page->visibility->label() }}@if ($page->visibility === PageVisibility::Private) · {{ $page->access_code ? 'code set' : 'no code yet' }}@endif</dd></div>
                 <div><dt>Published</dt><dd>{{ $page->published_at?->format('d M Y, h:i A') ?? 'Not yet' }}</dd></div>
                 <div><dt>Expires</dt><dd class="{{ $page->hasExpired() ? 'font-semibold text-rose-600' : '' }}">{{ $page->expires_at ? $page->expires_at->format('d M Y').' ('.$page->expires_at->diffForHumans().')' : 'Set on publish' }}</dd></div>
@@ -194,7 +206,7 @@
             </dl>
         </section>
 
-        <section class="a-card p-5" x-data="{ mode: 'package' }">
+        <section id="renew" class="a-card scroll-mt-20 p-5" x-data="{ mode: 'package' }">
             <h2 class="font-semibold">Renew</h2>
             <p class="mt-1 text-sm text-stone-500">Extends from the current expiry, or from today if it has passed. Re-activates an expired page.</p>
             <form method="POST" action="{{ route('admin.pages.renew', $page) }}" class="mt-3 space-y-3" data-confirm="Renew /{{ $page->slug }}?">
@@ -228,7 +240,7 @@
         <section class="a-card space-y-2 p-5">
             <h2 class="mb-2 font-semibold">More</h2>
             <form method="POST" action="{{ route('admin.pages.duplicate', $page) }}" data-confirm="Make a draft copy of this page?">@csrf<button class="a-btn a-btn-ghost w-full">Duplicate as draft</button></form>
-            <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" data-confirm="{{ $page->order_id ? 'Archive this page? It will stop being visible.' : 'Delete this page and its photos permanently?' }}">@csrf @method('DELETE')<button class="a-btn a-btn-ghost w-full text-rose-600">{{ $page->order_id ? 'Archive page' : 'Delete page' }}</button></form>
+            <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" data-confirm="{{ $page->order_id ? 'Archive this page? It will stop being visible.' : 'Delete this page and its photos permanently?' }}">@csrf @method('DELETE')<button class="a-btn a-btn-ghost w-full text-rose-700">{{ $page->order_id ? 'Archive page' : 'Delete page' }}</button></form>
         </section>
     </aside>
 </div>
