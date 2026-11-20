@@ -17,7 +17,19 @@ class TemplateData
         public readonly Collection $fields, // field schemas
         public readonly array $theme,
         public readonly array $knownKeys = [],
+        public readonly array $placeholders = [], // keys showing sample content in a draft preview
     ) {}
+
+    /**
+     * Marks an element as showing a field, so the order form can point at it in the live preview.
+     * Usage: <h1 {{ $d->f('your_name') }}>. Several keys: $d->f('a b').
+     */
+    public function f(string $keys): HtmlString
+    {
+        $ph = collect(explode(' ', $keys))->contains(fn ($k) => in_array($k, $this->placeholders, true));
+
+        return new HtmlString('data-f="'.e($keys).'"'.($ph ? ' data-ph' : ''));
+    }
 
     public function text(string $key, string $default = ''): string
     {
@@ -123,7 +135,7 @@ class TemplateData
     {
         $out = [];
         foreach ($this->fields as $f) {
-            if (in_array($f['key'], $this->knownKeys, true) || ! $this->has($f['key'])) {
+            if (in_array($f['key'], $this->knownKeys, true) || in_array($f['key'], $this->placeholders, true) || ! $this->has($f['key'])) {
                 continue;
             }
             $out[] = ['field' => $f, 'value' => $this->content[$f['key']] ?? null, 'media' => $this->media[$f['key']] ?? []];

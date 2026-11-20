@@ -4,11 +4,11 @@
 <main class="mx-auto max-w-3xl px-5 pb-16 pt-14 sm:px-8 sm:pt-24">
     <header class="t-reveal flex flex-col-reverse gap-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <h1 class="font-heading text-[2.9rem] font-semibold leading-[1.05] tracking-tight sm:text-7xl">{{ $d->text('full_name') }}</h1>
-            @if ($d->has('headline'))<p class="mt-5 max-w-xl text-xl text-soft sm:text-2xl">{{ $d->text('headline') }}</p>@endif
-            @if ($d->has('location'))<p class="mt-4 text-sm font-medium uppercase tracking-[0.2em] t-accent">{{ $d->text('location') }}</p>@endif
+            <h1 class="font-heading text-[2.9rem] font-semibold leading-[1.05] tracking-tight sm:text-7xl" data-split {{ $d->f('full_name') }}>{{ $d->text('full_name') }}</h1>
+            @if ($d->has('headline'))<p class="mt-5 max-w-xl text-xl text-soft sm:text-2xl" {{ $d->f('headline') }}>{{ $d->text('headline') }}</p>@endif
+            @if ($d->has('location'))<p class="mt-4 text-sm font-medium uppercase tracking-[0.2em] t-accent" {{ $d->f('location') }}>{{ $d->text('location') }}</p>@endif
         </div>
-        @if ($photo)<img src="{{ $photo['url'] }}" alt="{{ $d->text('full_name') }}" class="h-28 w-28 rounded-full object-cover grayscale sm:h-36 sm:w-36" width="144" height="144">@endif
+        @if ($photo)<img src="{{ $photo['url'] }}" {{ $d->f('profile_photo') }} alt="{{ $d->text('full_name') }}" class="h-28 w-28 rounded-full object-cover grayscale sm:h-36 sm:w-36" width="144" height="144">@endif
     </header>
 
     <div class="mt-14 h-px w-16 bg-accent"></div>
@@ -20,13 +20,13 @@
     @endphp
     <div class="mt-10 space-y-14">
         @if ($d->has('about'))
-            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8">
+            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8" {{ $d->f('about') }}>
                 <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-soft sm:pt-1.5">About</h2>
                 <div class="t-prose text-lg">{{ $d->para('about') }}</div>
             </section>
         @endif
         @if ($d->has('experience'))
-            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8">
+            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8" {{ $d->f('experience') }}>
                 <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-soft sm:pt-1.5">Experience</h2>
                 <ol class="space-y-7">
                     @foreach ($d->items('experience') as $e)
@@ -42,7 +42,7 @@
             </section>
         @endif
         @if ($d->has('projects'))
-            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8">
+            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8" {{ $d->f('projects') }}>
                 <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-soft sm:pt-1.5">Projects</h2>
                 <ul class="divide-y divide-current/10 border-y border-current/10">
                     @foreach ($d->items('projects') as $p)
@@ -59,13 +59,13 @@
             </section>
         @endif
         @if ($d->has('skills'))
-            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8">
+            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8" {{ $d->f('skills') }}>
                 <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-soft sm:pt-1.5">Skills</h2>
                 <p class="text-lg">{{ collect($d->items('skills'))->pluck('name')->filter()->implode('  /  ') }}</p>
             </section>
         @endif
         @if ($d->has('education'))
-            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8">
+            <section class="t-reveal grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-8" {{ $d->f('education') }}>
                 <h2 class="text-xs font-semibold uppercase tracking-[0.2em] text-soft sm:pt-1.5">Education</h2>
                 <ul class="space-y-3">
                     @foreach ($d->items('education') as $e)

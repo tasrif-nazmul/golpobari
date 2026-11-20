@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <div class="mx-auto max-w-3xl px-4 pt-6 sm:px-6 sm:pt-10">
+    <div class="mx-auto max-w-3xl px-4 pt-6 transition-[max-width] sm:px-6 sm:pt-10" :class="step === 3 ? 'lg:max-w-6xl' : ''">
         @unless ($boot['ordersEnabled'])
             <div class="mb-6 rounded-2xl bg-holud/20 p-4 font-semibold text-ink">এই মুহূর্তে নতুন অর্ডার নেওয়া সাময়িকভাবে বন্ধ আছে। শীঘ্রই আবার চালু হবে।</div>
         @endunless
@@ -88,71 +88,162 @@
             </div>
         </section>
 
-        {{-- STEP 3: Information --}}
-        <section x-show="step === 3" x-transition.opacity.duration.300ms class="space-y-6">
-            <div class="card space-y-5 p-5 sm:p-7">
-                <template x-for="f in textFields" :key="f.key">
-                    <div>
-                        <label class="field-label" :for="'f_' + f.key">
-                            <span x-text="f.label"></span><span x-show="f.required" class="text-sindoor"> *</span>
-                        </label>
+        {{-- STEP 3: The story, section by section, with a live preview that points at where each answer lands --}}
+        <section x-show="step === 3" x-transition.opacity.duration.300ms>
+            <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
+                <div class="space-y-5">
+                    <div class="rounded-2xl bg-white p-4 text-[0.95rem] ring-1 ring-ink/10 sm:p-5">
+                        <p class="font-bold">কীভাবে লিখবেন? খুব সহজ 👇</p>
+                        <ol class="mt-2 space-y-1.5 text-ink-soft">
+                            <li><b class="text-ink">১.</b> আপনার পেজটা উপর থেকে নিচে <b class="text-ink" x-text="bn(sections.length) + 'টা অংশে'"></b> সাজানো। নিচে প্রতিটা অংশ আলাদা বক্সে, পেজে যে ক্রমে আসবে সেই ক্রমে।</li>
+                            <li><b class="text-ink">২.</b> প্রতিটা ঘরের উপরে হলুদ <span class="rounded bg-holud/30 px-1.5 text-xs font-bold text-ink">উদাহরণ</span> দেখে দেখে লিখুন।</li>
+                            <li><b class="text-ink">৩.</b> <span class="lg:hidden">যেকোনো ঘরের পাশে <b class="text-sindoor">📍 পেজে কোথায়?</b> চাপলে</span><span class="hidden lg:inline">যে ঘরে লিখবেন, ডান পাশের প্রিভিউতে</span> <b class="text-sindoor">লাল দাগ দিয়ে</b> দেখাবে লেখাটা পেজের ঠিক কোথায় বসবে।</li>
+                        </ol>
+                    </div>
 
-                        <template x-if="['text','email','url','phone','date','color'].includes(f.type)">
-                            <input class="input" :id="'f_' + f.key" x-model="content[f.key]" :placeholder="f.placeholder || ''"
-                                   :type="{text:'text',email:'email',url:'url',phone:'tel',date:'date',color:'color'}[f.type]"
-                                   :inputmode="f.type === 'phone' ? 'tel' : null" :maxlength="f.max_length || null"
-                                   :aria-invalid="!!fieldError(f.key)" :aria-describedby="'h_' + f.key">
-                        </template>
-                        <template x-if="f.type === 'textarea'">
-                            <div>
-                                <textarea class="input" :id="'f_' + f.key" x-model="content[f.key]" :placeholder="f.placeholder || ''" rows="5"
-                                          :maxlength="f.max_length || null" :aria-invalid="!!fieldError(f.key)"></textarea>
-                                <p class="mt-1 text-right text-xs text-ink-mute" x-show="f.max_length" x-text="bn((content[f.key] || '').length) + '/' + bn(f.max_length)"></p>
+                    <template x-for="sec in sections" :key="sec.n">
+                        <div class="card overflow-hidden" :id="'sec_' + sec.n">
+                            <div class="flex items-start gap-4 border-b border-ink/5 bg-paper-2/60 px-5 py-4 sm:px-7">
+                                <div class="flex h-[4.6rem] w-10 shrink-0 flex-col gap-[3px] rounded-[.6rem] border-[2.5px] border-ink/80 bg-white p-[3px]" aria-hidden="true" title="পেজে এই অংশের জায়গা">
+                                    <template x-for="i in sec.total" :key="i"><span class="flex-1 rounded-[2px] transition" :class="i === sec.n ? 'bg-sindoor' : 'bg-ink/10'"></span></template>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-bold tracking-wide text-sindoor" x-text="'পেজের অংশ ' + bn(sec.n) + ' / ' + bn(sec.total)"></p>
+                                    <h2 class="text-xl font-bold leading-snug"><span x-text="sec.icon"></span> <span x-text="sec.title"></span></h2>
+                                    <p class="mt-0.5 text-sm leading-snug text-ink-soft"><b class="font-semibold text-ink">পেজে কোথায়:</b> <span x-text="sec.where"></span></p>
+                                </div>
                             </div>
-                        </template>
-                        <template x-if="f.type === 'select'">
-                            <select class="input" :id="'f_' + f.key" x-model="content[f.key]" :aria-invalid="!!fieldError(f.key)">
-                                <option value="">বেছে নিন</option>
-                                <template x-for="c in (f.options.choices || [])" :key="c"><option :value="c" x-text="c"></option></template>
-                            </select>
-                        </template>
-                        <template x-if="f.type === 'repeater'">
-                            <div class="space-y-3">
-                                <template x-for="(row, i) in content[f.key]" :key="i">
-                                    <div class="rounded-2xl bg-paper p-4 ring-1 ring-ink/10">
-                                        <div class="mb-2 flex items-center justify-between">
-                                            <span class="text-sm font-semibold text-ink-mute" x-text="'#' + bn(i + 1)"></span>
-                                            <span class="flex gap-1">
-                                                <button type="button" class="h-9 w-9 rounded-full text-ink-mute hover:bg-white" @click="moveRow(f, i, -1)" aria-label="উপরে">↑</button>
-                                                <button type="button" class="h-9 w-9 rounded-full text-ink-mute hover:bg-white" @click="moveRow(f, i, 1)" aria-label="নিচে">↓</button>
-                                                <button type="button" class="h-9 w-9 rounded-full text-sindoor hover:bg-white" @click="removeRow(f, i)" aria-label="মুছুন">✕</button>
-                                            </span>
+
+                            <div class="space-y-7 p-5 sm:p-7">
+                                <template x-for="f in sec.fields.map((k) => fieldBy(k)).filter(Boolean)" :key="f.key">
+                                    <div @focusin="focusField(f.key)" class="scroll-mt-24 rounded-2xl transition" :class="activeField === f.key ? 'lg:bg-sindoor/[0.04] lg:ring-2 lg:ring-sindoor/30 lg:ring-offset-8 lg:ring-offset-white' : ''">
+                                        <div class="mb-1.5 flex items-start justify-between gap-3">
+                                            <label class="field-label !mb-0" :for="isMedia(f) ? null : 'f_' + f.key">
+                                                <span x-text="f.label"></span><span x-show="f.required" class="text-sindoor"> *</span>
+                                                <span x-show="!f.required" class="text-xs font-normal text-ink-mute">(ঐচ্ছিক)</span>
+                                            </label>
+                                            <button type="button" class="shrink-0 rounded-full bg-sindoor/10 px-2.5 py-1 text-xs font-bold text-sindoor-dark transition hover:bg-sindoor/20" @click="showOnPage(f.key)">📍 পেজে কোথায়?</button>
                                         </div>
-                                        <div class="grid gap-3" :class="(f.options.fields || []).length > 1 && !(f.options.fields || []).some(s => s.type === 'textarea') ? 'sm:grid-cols-2' : ''">
-                                            <template x-for="s in (f.options.fields || [])" :key="s.key">
-                                                <label class="block">
-                                                    <span class="mb-1 block text-sm font-medium text-ink-soft" x-text="s.label"></span>
-                                                    <template x-if="s.type === 'textarea'"><textarea class="input !min-h-[5.5rem]" rows="3" x-model="row[s.key]" maxlength="2000"></textarea></template>
-                                                    <template x-if="s.type === 'select'">
-                                                        <select class="input" x-model="row[s.key]"><option value="">—</option><template x-for="c in (s.choices || [])" :key="c"><option :value="c" x-text="c"></option></template></select>
+                                        <div class="mb-2.5 flex items-center gap-2.5 text-sm text-ink-mute" x-show="exampleText(f) || exampleImage(f)">
+                                            <span class="shrink-0 rounded bg-holud/30 px-1.5 py-0.5 text-[11px] font-bold text-ink">উদাহরণ</span>
+                                            <template x-if="exampleImage(f)"><img :src="exampleImage(f)" alt="" class="h-9 w-9 shrink-0 rounded-md object-cover ring-1 ring-ink/10"></template>
+                                            <span class="line-clamp-2 italic" x-text="exampleText(f) || (f.type === 'gallery' ? 'এরকম কয়েকটা ছবি' : 'এরকম একটা ছবি')"></span>
+                                        </div>
+
+                                        <template x-if="['text','email','url','phone','date','color'].includes(f.type)">
+                                            <input class="input" :id="'f_' + f.key" x-model="content[f.key]" :placeholder="f.placeholder || ''"
+                                                   :type="{text:'text',email:'email',url:'url',phone:'tel',date:'date',color:'color'}[f.type]"
+                                                   :inputmode="f.type === 'phone' ? 'tel' : null" :maxlength="f.max_length || null"
+                                                   :aria-invalid="!!fieldError(f.key)" :aria-describedby="'h_' + f.key">
+                                        </template>
+                                        <template x-if="f.type === 'textarea'">
+                                            <div>
+                                                <textarea class="input" :id="'f_' + f.key" x-model="content[f.key]" :placeholder="f.placeholder || ''" rows="5"
+                                                          :maxlength="f.max_length || null" :aria-invalid="!!fieldError(f.key)"></textarea>
+                                                <p class="mt-1 text-right text-xs text-ink-mute" x-show="f.max_length" x-text="bn((content[f.key] || '').length) + '/' + bn(f.max_length)"></p>
+                                            </div>
+                                        </template>
+                                        <template x-if="f.type === 'select'">
+                                            <select class="input" :id="'f_' + f.key" x-model="content[f.key]" :aria-invalid="!!fieldError(f.key)">
+                                                <option value="">বেছে নিন</option>
+                                                <template x-for="c in (f.options.choices || [])" :key="c"><option :value="c" x-text="c"></option></template>
+                                            </select>
+                                        </template>
+                                        <template x-if="f.type === 'repeater'">
+                                            <div class="space-y-3">
+                                                <template x-for="(row, i) in content[f.key]" :key="i">
+                                                    <div class="rounded-2xl bg-paper p-4 ring-1 ring-ink/10">
+                                                        <div class="mb-2 flex items-center justify-between">
+                                                            <span class="text-sm font-semibold text-ink-mute" x-text="'#' + bn(i + 1)"></span>
+                                                            <span class="flex gap-1">
+                                                                <button type="button" class="h-9 w-9 rounded-full text-ink-mute hover:bg-white" @click="moveRow(f, i, -1)" aria-label="উপরে">↑</button>
+                                                                <button type="button" class="h-9 w-9 rounded-full text-ink-mute hover:bg-white" @click="moveRow(f, i, 1)" aria-label="নিচে">↓</button>
+                                                                <button type="button" class="h-9 w-9 rounded-full text-sindoor hover:bg-white" @click="removeRow(f, i)" aria-label="মুছুন">✕</button>
+                                                            </span>
+                                                        </div>
+                                                        <div class="grid gap-3" :class="(f.options.fields || []).length > 1 && !(f.options.fields || []).some(s => s.type === 'textarea') ? 'sm:grid-cols-2' : ''">
+                                                            <template x-for="s in (f.options.fields || [])" :key="s.key">
+                                                                <label class="block">
+                                                                    <span class="mb-1 block text-sm font-medium text-ink-soft" x-text="s.label"></span>
+                                                                    <template x-if="s.type === 'textarea'"><textarea class="input !min-h-[5.5rem]" rows="3" x-model="row[s.key]" maxlength="2000" :placeholder="rowExample(f, s.key)"></textarea></template>
+                                                                    <template x-if="s.type === 'select'">
+                                                                        <select class="input" x-model="row[s.key]"><option value="">—</option><template x-for="c in (s.choices || [])" :key="c"><option :value="c" x-text="c"></option></template></select>
+                                                                    </template>
+                                                                    <template x-if="!['textarea','select'].includes(s.type)"><input class="input" :type="s.type === 'url' ? 'url' : 'text'" x-model="row[s.key]" maxlength="255" :placeholder="rowExample(f, s.key)"></template>
+                                                                </label>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <button type="button" class="btn btn-ghost btn-sm w-full border-2 border-dashed border-ink/15 !ring-0" @click="addRow(f)"
+                                                        x-show="(content[f.key] || []).length < (f.options.max || 20)" x-text="(content[f.key] || []).length ? '+ আরেকটা যোগ করুন' : '+ প্রথমটা যোগ করুন'"></button>
+                                            </div>
+                                        </template>
+
+                                        {{-- Photos sit right next to the words they go with --}}
+                                        <template x-if="isMedia(f)">
+                                            <div>
+                                                <input type="file" class="sr-only" :id="'file_' + f.key" accept="image/jpeg,image/png,image/webp" :multiple="f.type === 'gallery'" @change="onFiles(f, $event)">
+                                                <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+                                                    <template x-for="(m, i) in (media[f.key] || [])" :key="m.key || m.id">
+                                                        <div class="group relative">
+                                                            <div class="relative aspect-square overflow-hidden rounded-xl bg-paper-2">
+                                                                <img :src="m.thumb" alt="" class="h-full w-full object-cover" x-on:error="photoBroken(f, i)" :class="m.uploading || m.error ? 'opacity-50' : ''">
+                                                                <div x-show="m.uploading" class="absolute inset-x-2 bottom-2 h-1.5 overflow-hidden rounded-full bg-white/70"><div class="h-full bg-kolapata transition-all" :style="`width:${m.progress}%`"></div></div>
+                                                                <div x-show="m.error" class="absolute inset-0 grid place-items-center bg-sindoor/80 p-1 text-center text-xs font-semibold text-white" x-text="m.error"></div>
+                                                                <button type="button" class="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-ink/75 text-white" @click="removePhoto(f, i)" aria-label="ছবি সরান">✕</button>
+                                                                <div x-show="f.type === 'gallery' && (media[f.key] || []).length > 1" class="absolute bottom-1 left-1 flex gap-1">
+                                                                    <button type="button" class="grid h-7 w-7 place-items-center rounded-full bg-white/85 text-xs" @click="movePhoto(f, i, -1)" aria-label="আগে">◀</button>
+                                                                    <button type="button" class="grid h-7 w-7 place-items-center rounded-full bg-white/85 text-xs" @click="movePhoto(f, i, 1)" aria-label="পরে">▶</button>
+                                                                </div>
+                                                            </div>
+                                                            <input x-show="f.type === 'gallery' && m.id" type="text" x-model="m.caption" maxlength="140" placeholder="ক্যাপশন (ঐচ্ছিক)" class="mt-1 w-full rounded-lg border-0 bg-paper px-2 py-1.5 text-xs ring-1 ring-ink/10" aria-label="ছবির ক্যাপশন">
+                                                        </div>
                                                     </template>
-                                                    <template x-if="!['textarea','select'].includes(s.type)"><input class="input" :type="s.type === 'url' ? 'url' : 'text'" x-model="row[s.key]" maxlength="255"></template>
-                                                </label>
-                                            </template>
-                                        </div>
+                                                    <button type="button" @click="pick(f)" x-show="f.type === 'gallery' || !(media[f.key] || []).length"
+                                                            class="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink/20 bg-paper text-ink-soft transition hover:border-sindoor hover:text-sindoor">
+                                                        <x-icon name="upload" class="h-7 w-7" />
+                                                        <span class="text-xs font-semibold" x-text="f.type === 'image' ? 'ছবি দিন' : 'ছবি যোগ করুন'"></span>
+                                                    </button>
+                                                </div>
+                                                <p class="mt-2 text-xs text-ink-mute" x-show="f.type === 'gallery'">একসাথে অনেকগুলো ছবি বেছে নিতে পারবেন। মোট <span x-text="bn(photoCount) + '/' + bn(photoLimit)"></span>টি · প্রতিটি সর্বোচ্চ <span x-text="bn(boot.limits.max_mb)"></span> MB</p>
+                                            </div>
+                                        </template>
+
+                                        <p class="field-help" :id="'h_' + f.key" x-show="f.help" x-text="f.help"></p>
+                                        <p class="field-error" x-show="fieldError(f.key) || errors['media.' + f.key]" x-text="fieldError(f.key) || errors['media.' + f.key]"></p>
                                     </div>
                                 </template>
-                                <button type="button" class="btn btn-ghost btn-sm w-full border-2 border-dashed border-ink/15 !ring-0" @click="addRow(f)"
-                                        x-show="(content[f.key] || []).length < (f.options.max || 20)">+ যোগ করুন</button>
                             </div>
-                        </template>
+                        </div>
+                    </template>
+                </div>
 
-                        <p class="field-help" :id="'h_' + f.key" x-show="f.help" x-text="f.help"></p>
-                        <p class="field-error" x-show="fieldError(f.key)" x-text="fieldError(f.key)"></p>
+                {{-- Live preview: beside the form on large screens, a full-screen sheet on phones --}}
+                <div x-show="step === 3" :class="previewOpen ? 'fixed inset-0 z-[70] flex flex-col bg-ink px-3 pb-3 pt-3' : 'hidden lg:sticky lg:top-[8.75rem] lg:block'" @keydown.escape.window="previewOpen = false"
+                     :role="previewOpen ? 'dialog' : null" :aria-modal="previewOpen ? 'true' : null" aria-label="আপনার পেজের লাইভ প্রিভিউ">
+                    <div class="mb-2 flex items-center justify-between gap-3" :class="previewOpen ? 'text-paper' : ''">
+                        <div>
+                            <p class="font-bold"><span class="mr-1 inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-kolapata"></span> লাইভ প্রিভিউ</p>
+                            <p class="text-xs" :class="previewOpen ? 'text-paper/70' : 'text-ink-mute'"><b class="text-sindoor">লাল দাগ</b> = এই লেখাটা যেখানে বসবে · ঝাপসা লেখা = নমুনা</p>
+                        </div>
+                        <button type="button" x-show="previewOpen" class="btn btn-primary btn-sm shrink-0" @click="previewOpen = false">ঠিক আছে, লিখি</button>
                     </div>
-                </template>
+                    <div class="relative mx-auto w-full overflow-hidden rounded-[1.8rem] border-[7px] border-ink bg-white shadow-[var(--shadow-lift)]" :class="previewOpen ? 'max-w-[430px] flex-1' : 'h-[calc(100vh-15.5rem)] min-h-[420px] max-h-[760px]'">
+                        <div x-show="liveLoading" class="absolute right-3 top-3 z-10 rounded-full bg-ink/80 px-3 py-1 text-xs font-semibold text-paper">আপডেট হচ্ছে…</div>
+                        <iframe x-ref="live" title="আপনার পেজের লাইভ প্রিভিউ" class="block h-full w-full bg-white"></iframe>
+                    </div>
+                </div>
             </div>
 
+            <button type="button" x-show="step === 3 && !previewOpen" @click="openPreview()"
+                    class="fixed bottom-[5.6rem] right-4 z-40 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-bold text-paper shadow-[var(--shadow-lift)] lg:hidden">
+                👀 পেজটা কেমন হচ্ছে?
+            </button>
+        </section>
+
+        {{-- STEP 4: Link and contact --}}
+        <section x-show="step === 4" x-transition.opacity.duration.300ms class="space-y-6">
             <div class="card space-y-5 p-5 sm:p-7">
                 <div>
                     <h2 class="text-xl font-bold">পেজের লিংক</h2>
@@ -196,49 +287,6 @@
                     <textarea id="note" class="input !min-h-[5.5rem]" rows="3" x-model="note" maxlength="1000" placeholder="যেমন: ১৪ তারিখ রাত ১২টার আগে লাগবে"></textarea>
                 </div>
             </div>
-        </section>
-
-        {{-- STEP 4: Photos --}}
-        <section x-show="step === 4" x-transition.opacity.duration.300ms class="space-y-5">
-            <p class="rounded-2xl bg-white px-4 py-3 text-sm text-ink-soft ring-1 ring-ink/10">
-                JPG, PNG বা WebP · প্রতিটি সর্বোচ্চ <span x-text="bn(boot.limits.max_mb)"></span> MB · মোট <b x-text="bn(photoCount) + '/' + bn(photoLimit)"></b>টি ছবি
-            </p>
-            <template x-if="!mediaFields.length"><p class="card p-6 text-ink-soft">এই টেমপ্লেটে ছবির দরকার নেই। এগিয়ে যান।</p></template>
-            <template x-for="f in mediaFields" :key="f.key">
-                <div class="card p-5 sm:p-7">
-                    <div class="mb-4 flex items-start justify-between gap-3">
-                        <div>
-                            <h2 class="text-lg font-bold"><span x-text="f.label"></span><span x-show="f.required" class="text-sindoor"> *</span></h2>
-                            <p class="text-sm text-ink-soft" x-text="f.help || (f.type === 'image' ? 'একটি ছবি' : 'একাধিক ছবি দিতে পারেন')"></p>
-                        </div>
-                    </div>
-                    <input type="file" class="sr-only" :id="'file_' + f.key" accept="image/jpeg,image/png,image/webp" :multiple="f.type === 'gallery'" @change="onFiles(f, $event)">
-
-                    <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
-                        <template x-for="(m, i) in (media[f.key] || [])" :key="m.key || m.id">
-                            <div class="group relative">
-                                <div class="relative aspect-square overflow-hidden rounded-xl bg-paper-2">
-                                    <img :src="m.thumb" alt="" class="h-full w-full object-cover" x-on:error="photoBroken(f, i)" :class="m.uploading || m.error ? 'opacity-50' : ''">
-                                    <div x-show="m.uploading" class="absolute inset-x-2 bottom-2 h-1.5 overflow-hidden rounded-full bg-white/70"><div class="h-full bg-kolapata transition-all" :style="`width:${m.progress}%`"></div></div>
-                                    <div x-show="m.error" class="absolute inset-0 grid place-items-center bg-sindoor/80 p-1 text-center text-xs font-semibold text-white" x-text="m.error"></div>
-                                    <button type="button" class="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-ink/75 text-white" @click="removePhoto(f, i)" aria-label="ছবি সরান">✕</button>
-                                    <div x-show="f.type === 'gallery' && (media[f.key] || []).length > 1" class="absolute bottom-1 left-1 flex gap-1">
-                                        <button type="button" class="grid h-7 w-7 place-items-center rounded-full bg-white/85 text-xs" @click="movePhoto(f, i, -1)" aria-label="আগে">◀</button>
-                                        <button type="button" class="grid h-7 w-7 place-items-center rounded-full bg-white/85 text-xs" @click="movePhoto(f, i, 1)" aria-label="পরে">▶</button>
-                                    </div>
-                                </div>
-                                <input x-show="f.type === 'gallery' && m.id" type="text" x-model="m.caption" maxlength="140" placeholder="ক্যাপশন" class="mt-1 w-full rounded-lg border-0 bg-paper px-2 py-1.5 text-xs ring-1 ring-ink/10" aria-label="ছবির ক্যাপশন">
-                            </div>
-                        </template>
-                        <button type="button" @click="pick(f)" x-show="f.type === 'gallery' || !(media[f.key] || []).length"
-                                class="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink/20 bg-paper text-ink-soft transition hover:border-sindoor hover:text-sindoor">
-                            <x-icon name="upload" class="h-7 w-7" />
-                            <span class="text-xs font-semibold" x-text="f.type === 'image' ? 'ছবি দিন' : 'ছবি যোগ করুন'"></span>
-                        </button>
-                    </div>
-                    <p class="field-error" x-show="errors['media.' + f.key]" x-text="errors['media.' + f.key]"></p>
-                </div>
-            </template>
         </section>
 
         {{-- STEP 5: Preview --}}
@@ -365,7 +413,7 @@
             <div class="card divide-y divide-dashed divide-ink/10 px-5 sm:px-7">
                 <template x-for="row in [
                     ['ক্যাটাগরি', category?.name, 1], ['টেমপ্লেট', template?.name, 2], ['উপলক্ষ', occasion, 2],
-                    ['লিংক', slug ? 'golpobari.com/' + slug : 'আমরা বেছে দেব', 3], ['প্যাকেজ', package ? package.name + ' (' + package.duration + ')' : '', 6],
+                    ['লিংক', slug ? 'golpobari.com/' + slug : 'আমরা বেছে দেব', 4], ['প্যাকেজ', package ? package.name + ' (' + package.duration + ')' : '', 6],
                     ['দাম', money(totals.original), 6], ['কুপন', coupon.applied ? coupon.applied.code : '—', 7]
                 ]" :key="row[0]">
                     <div class="flex items-center justify-between gap-4 py-3.5" x-show="row[1]">
@@ -385,8 +433,8 @@
             </div>
 
             <div class="card px-5 py-4 sm:px-7">
-                <div class="flex items-center justify-between"><h2 class="text-lg font-bold">আপনার তথ্য</h2><button type="button" class="text-xs font-semibold text-sindoor underline" @click="goTo(3)">বদলান</button></div>
-                <p class="mt-1 text-ink-soft"><span x-text="customer.name"></span> · <span x-text="customer.phone"></span><span x-show="customer.email" x-text="' · ' + customer.email"></span></p>
+                <div class="flex items-center justify-between"><h2 class="text-lg font-bold">আপনার তথ্য</h2><button type="button" class="text-xs font-semibold text-sindoor underline" @click="goTo(3)">গল্প বদলান</button></div>
+                <p class="mt-1 text-ink-soft"><button type="button" class="float-right text-xs font-semibold text-sindoor underline" @click="goTo(4)">যোগাযোগ বদলান</button><span x-text="customer.name"></span> · <span x-text="customer.phone"></span><span x-show="customer.email" x-text="' · ' + customer.email"></span></p>
                 <dl class="mt-3 space-y-2 text-sm">
                     <template x-for="f in textFields" :key="f.key">
                         <div x-show="f.type === 'repeater' ? (content[f.key] || []).length : content[f.key]">
@@ -398,7 +446,7 @@
             </div>
 
             <div class="card px-5 py-4 sm:px-7" x-show="photoCount">
-                <div class="flex items-center justify-between"><h2 class="text-lg font-bold" x-text="'ছবি (' + bn(photoCount) + ')'"></h2><button type="button" class="text-xs font-semibold text-sindoor underline" @click="goTo(4)">বদলান</button></div>
+                <div class="flex items-center justify-between"><h2 class="text-lg font-bold" x-text="'ছবি (' + bn(photoCount) + ')'"></h2><button type="button" class="text-xs font-semibold text-sindoor underline" @click="goTo(3)">বদলান</button></div>
                 <div class="mt-3 grid grid-cols-5 gap-1.5 sm:grid-cols-8">
                     <template x-for="m in Object.values(media).flat().filter(x => x.id)" :key="m.id"><img :src="m.thumb" alt="" class="aspect-square rounded-lg object-cover"></template>
                 </div>
@@ -420,7 +468,7 @@
             <button type="button" class="btn btn-ghost w-14 shrink-0 !px-0" x-show="step > 1" @click="back()" aria-label="আগের ধাপ"><x-icon name="chevron-left" class="h-6 w-6" /></button>
             <template x-if="step < 10">
                 <button type="button" class="btn btn-primary flex-1 text-lg" @click="next()" x-show="step !== 1 && !(step === 2 && !templateSlug)">
-                    <span x-text="{3: 'ছবি দিতে যাই', 4: 'প্রিভিউ দেখি', 5: 'ঠিক আছে, এগোই', 6: 'এগিয়ে যান', 7: coupon.applied ? 'এগিয়ে যান' : 'কুপন নেই, এগোই', 8: 'টাকা পাঠিয়েছি', 9: 'রিভিউ করি'}[step] || 'এগিয়ে যান'"></span>
+                    <span x-text="{3: 'লেখা শেষ, এগোই', 4: 'পুরো প্রিভিউ দেখি', 5: 'ঠিক আছে, এগোই', 6: 'এগিয়ে যান', 7: coupon.applied ? 'এগিয়ে যান' : 'কুপন নেই, এগোই', 8: 'টাকা পাঠিয়েছি', 9: 'রিভিউ করি'}[step] || 'এগিয়ে যান'"></span>
                     <x-icon name="arrow-right" class="h-5 w-5" />
                 </button>
             </template>

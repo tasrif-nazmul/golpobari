@@ -78,8 +78,12 @@ class Template extends Model
         return TemplateRegistry::view($this->layout);
     }
 
+    /** Layout sample, with this template's own sample text (design.sample) on top. */
     public function sampleContent(): array
     {
-        return TemplateRegistry::layout($this->layout)['sample'] ?? [];
+        $base = TemplateRegistry::layout($this->layout)['sample'] ?? [];
+        $own = is_array($this->design['sample'] ?? null) ? $this->design['sample'] : [];
+
+        return array_merge($base, $own);
     }
 }

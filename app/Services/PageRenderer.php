@@ -31,19 +31,26 @@ class PageRenderer
         ]);
     }
 
-    public function forSample(Template $template): \Illuminate\Contracts\View\View
+    /** @return array{0: array, 1: array} [content, media] */
+    private function splitSample(Template $template): array
     {
-        $sample = $template->sampleContent();
         $media = [];
         $content = [];
         $mediaKeys = $template->fields->filter->isMedia()->pluck('key')->all();
-        foreach ($sample as $k => $v) {
+        foreach ($template->sampleContent() as $k => $v) {
             if (in_array($k, $mediaKeys, true) || (is_array($v) && (isset($v['url']) || isset($v[0]['url'])))) {
                 $media[$k] = isset($v['url']) ? [$v] : $v;
             } else {
                 $content[$k] = $v;
             }
         }
+
+        return [$content, $media];
+    }
+
+    public function forSample(Template $template): \Illuminate\Contracts\View\View
+    {
+        [$content, $media] = $this->splitSample($template);
 
         return $this->make($template, $content, $media, [], [
             'page' => null,
@@ -54,9 +61,31 @@ class PageRenderer
     }
 
     /** Preview built from the wizard's unsaved data and this browser's draft uploads. */
-    public function forDraft(Template $template, array $content, Collection $draftMedia): \Illuminate\Contracts\View\View
+    public function forDraft(Template $template, array $content, Collection $draftMedia, bool $fillSample = false): \Illuminate\Contracts\View\View
     {
-        return $this->make($template, $content, $this->groupMedia($draftMedia), [], [
+        $media = $this->groupMedia($draftMedia);
+        $placeholders = [];
+        if ($fillSample) {
+            // Show faded sample content where the customer hasn't written yet, so they can see where each answer goes.
+            [$sc, $sm] = $this->splitSample($template);
+            $fieldKeys = $template->fields->pluck('key')->all();
+            foreach ($sc as $k => $v) {
+                $cur = $content[$k] ?? null;
+                if (in_array($k, $fieldKeys, true) && (is_array($cur) ? count($cur) === 0 : trim((string) $cur) === '')) {
+                    $content[$k] = $v;
+                    $placeholders[] = $k;
+                }
+            }
+            foreach ($sm as $k => $v) {
+                if (in_array($k, $fieldKeys, true) && empty($media[$k])) {
+                    $media[$k] = $v;
+                    $placeholders[] = $k;
+                }
+            }
+        }
+
+        return $this->make($template, $content, $media, [], [
+            'placeholders' => $placeholders,
             'page' => null,
             'title' => 'আপনার পেজের প্রিভিউ',
             'isDraft' => true,
@@ -85,7 +114,8 @@ class PageRenderer
         $fields = $template->fields->map->toSchema();
         $known = collect($layout['fields'])->pluck('key')->all();
 
-        $data = new TemplateData($content, $media, $fields, $theme, $known);
+        $data = new TemplateData($content, $media, $fields, $theme, $known, $extra['placeholders'] ?? []);
+        unset($extra['placeholders']);
 
         return View::make($template->viewName(), array_merge($extra, [
             'd' => $data,

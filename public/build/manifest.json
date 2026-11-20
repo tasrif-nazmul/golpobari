@@ -13,7 +13,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Dxz2Pcu_.css",
+    "file": "assets/app-C3Eh3QrA.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/css/page.css": {
-    "file": "assets/page-BUrlyuCg.css",
+    "file": "assets/page-DWXIpWJ7.css",
     "src": "resources/css/page.css",
     "isEntry": true,
     "name": "page",
@@ -40,7 +40,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CgBnPRLx.js",
+    "file": "assets/app-DJbfbLgg.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -49,7 +49,7 @@
     ]
   },
   "resources/js/page.js": {
-    "file": "assets/page-8msdaOqN.js",
+    "file": "assets/page-yT4UFgIf.js",
     "name": "page",
     "src": "resources/js/page.js",
     "isEntry": true

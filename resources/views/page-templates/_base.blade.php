@@ -32,8 +32,9 @@
     <link rel="stylesheet" href="{{ $fontsUrl }}">
     @vite(['resources/css/page.css', 'resources/js/page.js'])
 </head>
-<body class="t-page @yield('body-class')" style="{{ $d->cssVars() }}">
-@if (! empty($isPreview))
+<body class="t-page @yield('body-class')" style="{{ $d->cssVars() }}" @if (! empty($isDraft)) data-draft @endif>
+<div class="t-progress" data-progress aria-hidden="true"></div>
+@if (! empty($isPreview) && empty($isDraft))
     <div class="t-preview-bar">{{ $page ? 'প্রিভিউ · এখনো পাবলিক নয়' : (! empty($isDraft) ? 'আপনার পেজের প্রিভিউ · জমা দেওয়ার পর আমরা সাজিয়ে প্রকাশ করব' : 'নমুনা প্রিভিউ · আপনার পেজে থাকবে আপনার লেখা ও ছবি') }}</div>
 @endif
 
