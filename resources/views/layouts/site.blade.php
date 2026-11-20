@@ -144,7 +144,7 @@
                     <button type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10" @click="close()" aria-label="বন্ধ করুন"><x-icon name="x" class="h-5 w-5" /></button>
                 </div>
                 <div class="relative min-h-0 flex-1 bg-white sm:flex-none sm:bg-transparent">
-                    <div class="pv-frame h-full">
+                    <div class="pv-frame max-sm:h-full">
                         <div class="pv-screen relative h-full">
                             <div x-show="loading" class="absolute inset-0 z-10 grid place-items-center bg-paper text-ink-mute"><span class="animate-pulse">প্রিভিউ আসছে…</span></div>
                             <iframe :src="item.render" class="block h-full w-full border-0 bg-white" :title="item.name + ' লাইভ প্রিভিউ'" allow="autoplay" @load="loading = false"></iframe>
