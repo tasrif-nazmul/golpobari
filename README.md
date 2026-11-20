@@ -69,6 +69,8 @@ The two-phone images on the template cards live in `public/images/previews/phone
 node tools/previews/phones.cjs http://localhost:8000 romantic-story birthday-celebration
 ```
 
+Sample photos in template previews are free [Unsplash](https://unsplash.com/license) photos of Bangladeshi people and places, saved as `public/images/samples/<name>.webp`. Each one's page and photographer is in `tools/photos/sources.json` and `public/images/samples/CREDITS.md`; `python3 tools/photos/fetch.py` downloads them again. A name without a `.webp` falls back to the drawn `.svg`. To give one template different photos from its layout, add it to `TemplateRegistry::SAMPLE_PHOTOS`.
+
 ### Changing CSS or JS
 
 Edit files in `resources/`, run `npm run build`, and **commit `public/build`**. Production serves those files directly.

@@ -1,0 +1,21 @@
+{
+  "license": "Unsplash License (https://unsplash.com/license): free for commercial and non-commercial use, no permission needed.",
+  "photos": {
+    "portrait-a": {"id": "1727934404073-797950f15a76", "page": "https://unsplash.com/photos/KFtITrEOu5M", "by": "@rejaul_creativedesign", "what": "Woman in a red sari reading"},
+    "portrait-b": {"id": "1683105653852-25028a53a3e4", "page": "https://unsplash.com/photos/kz2w_rdhQsc", "by": "@kaziminmizan", "what": "Man with beard and glasses"},
+    "portrait-c": {"id": "1662267486436-c2e8bd95c2d4", "page": "https://unsplash.com/photos/JvKszEBumM0", "by": "@sharaf_captures98", "what": "Woman in a purple sari"},
+    "mother": {"id": "1463335361701-e90f4c5045d0", "page": "https://unsplash.com/photos/C7m7RSFONYc", "by": "@oricasas", "what": "Smiling older woman in a scarf"},
+    "elder": {"id": "1655313893399-e9d607e1d84c", "page": "https://unsplash.com/photos/_4X8tCh1uZY", "by": "@thesaged", "what": "Elderly man with a book"},
+    "holud": {"id": "1680711555387-3f7c64c4747b", "page": "https://unsplash.com/photos/ek6xQwmHv-U", "by": "@mubinurrahmanmrp", "what": "Bride at a gaye holud with flowers"},
+    "couple-a": {"id": "1724280120520-c52b4c1170fd", "page": "https://unsplash.com/photos/ondYiUBuR_g", "by": "@amranahmedsifat", "what": "Couple, woman in a sari"},
+    "couple-b": {"id": "1720105761832-927de5f2ecce", "page": "https://unsplash.com/photos/gE42gPtkc6E", "by": "@adventurelife24", "what": "Couple standing together"},
+    "couple-c": {"id": "1767790693205-c9f4df07a234", "page": "https://unsplash.com/photos/BaZ-QDAuooM", "by": "@royalfoto", "what": "Couple embracing at golden hour"},
+    "friends": {"id": "1739916855018-269ced9699e9", "page": "https://unsplash.com/photos/_vPMpBg8A_E", "by": "@champsara", "what": "Four friends in saris"},
+    "flowers": {"id": "1661142175513-a5f0871f1ad1", "page": "https://unsplash.com/photos/C2FLN_sOqVw", "by": "@feeling_hope", "what": "Field of marigolds"},
+    "cake": {"id": "1606983340126-99ab4feaa64a", "page": "https://unsplash.com/photos/LRIQuZyxKRM", "by": "@stephen2002", "what": "Chocolate birthday cake"},
+    "cafe": {"id": "1612880202987-b1ec29fb0839", "page": "https://unsplash.com/photos/lLeJtNN-6TA", "by": "@dapiki", "what": "Cup of coffee"},
+    "landscape-a": {"id": "1713931750497-1428b117158b", "page": "https://unsplash.com/photos/IeL4kDu3SmA", "by": "@shahriarbayezid", "what": "Tree in a mustard field"},
+    "landscape-b": {"id": "1585123388867-3bfe6dd4bdbf", "page": "https://unsplash.com/photos/MrKPi-yajC0", "by": "@amjadrana", "what": "Path through green hills"},
+    "landscape-c": {"id": "1761961850694-039fca30e197", "page": "https://unsplash.com/photos/uddk4v8xu88", "by": "@shahariar297", "what": "Fisherman's boat on a misty morning"}
+  }
+}

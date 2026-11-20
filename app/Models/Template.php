@@ -112,6 +112,9 @@ class Template extends Model
         $base = TemplateRegistry::layout($this->layout)['sample'] ?? [];
         $own = is_array($this->design['sample'] ?? null) ? $this->design['sample'] : [];
 
-        return array_merge($base, $own);
+        $photos = collect(TemplateRegistry::SAMPLE_PHOTOS[$this->slug] ?? [])
+            ->map(fn ($v) => is_array($v) ? array_map(TemplateRegistry::img(...), $v) : TemplateRegistry::img($v))->all();
+
+        return array_merge($base, $photos, $own);
     }
 }

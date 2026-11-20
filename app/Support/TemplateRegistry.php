@@ -230,9 +230,20 @@ class TemplateRegistry
         ]]);
     }
 
-    private static function img(string $name): array
+    /** Sample photos a single template shows instead of its layout's (slug => field => photo name). */
+    public const SAMPLE_PHOTOS = [
+        'gaye-holud' => ['hero_photo' => 'holud', 'gallery' => ['flowers', 'friends']],
+    ];
+
+    /**
+     * A sample photo: the free Unsplash photo in public/images/samples/<name>.webp (sources and
+     * licence in tools/photos/sources.json), or the drawn .svg when there is no photo.
+     */
+    public static function img(string $name): array
     {
-        return ['url' => asset('images/samples/'.$name.'.svg'), 'thumb' => asset('images/samples/'.$name.'.svg'), 'caption' => null];
+        $file = 'images/samples/'.$name.(file_exists(public_path('images/samples/'.$name.'.webp')) ? '.webp' : '.svg');
+
+        return ['url' => asset($file), 'thumb' => asset($file), 'caption' => null];
     }
 
     private static function minimalPortfolio(): array
@@ -674,10 +685,10 @@ class TemplateRegistry
                 'event_title' => 'অনিকা ও শুভর বিয়ে', 'hosts' => 'রহমান ও চৌধুরী পরিবার',
                 'event_date' => now()->addDays(20)->toDateString(), 'event_time' => 'সন্ধ্যা ৭টা',
                 'venue' => "Bashundhara Convention Hall 2\nBashundhara R/A, Dhaka", 'map_link' => '',
-                'hero_photo' => self::img('flowers'),
+                'hero_photo' => self::img('couple-a'),
                 'message' => 'আমাদের জীবনের নতুন অধ্যায়ের শুরুতে আপনার উপস্থিতি ও দোয়া কামনা করছি।',
                 'schedule' => [['time' => '৭:০০', 'title' => 'অতিথি আগমন'], ['time' => '৮:০০', 'title' => 'বিবাহ অনুষ্ঠান'], ['time' => '৯:০০', 'title' => 'নৈশভোজ']],
-                'dress_code' => 'Traditional', 'gallery' => [self::img('couple-a'), self::img('couple-c')], 'rsvp_phone' => '01700000000',
+                'dress_code' => 'Traditional', 'gallery' => [self::img('couple-c'), self::img('flowers')], 'rsvp_phone' => '01700000000',
             ],
         ];
     }
@@ -890,7 +901,7 @@ class TemplateRegistry
                 self::f('from_name', 'আপনার নাম', 'text', ['max_length' => 40]),
             ],
             'sample' => [
-                'title' => 'আম্মু, তোমাকে ভালোবাসার কারণগুলো', 'to_name' => 'আম্মু', 'photo' => self::img('portrait-c'),
+                'title' => 'আম্মু, তোমাকে ভালোবাসার কারণগুলো', 'to_name' => 'আম্মু', 'photo' => self::img('mother'),
                 'intro' => 'সব কারণ লিখতে গেলে খাতা ফুরিয়ে যাবে। তাই অল্প কয়েকটা এখানে রাখলাম।',
                 'reasons' => [
                     ['text' => 'জ্বর হলে সারারাত জেগে মাথায় পানি দাও।'], ['text' => 'আমার প্রিয় খিচুড়িটা শুধু তুমিই এভাবে রাঁধতে পারো।'],
@@ -967,10 +978,10 @@ class TemplateRegistry
             ],
             'sample' => [
                 'full_name' => 'আব্দুর রহমান', 'relation' => 'আমাদের প্রিয় আব্বু', 'born' => '১৯৫২', 'passed' => '২০২৪',
-                'portrait' => self::img('portrait-b'),
+                'portrait' => self::img('elder'),
                 'life_story' => "কুমিল্লার এক ছোট্ট গ্রামে জন্ম। স্কুলশিক্ষক হিসেবে চল্লিশ বছর কাটিয়েছেন, হাজারো ছাত্রছাত্রীর প্রিয় \"রহমান স্যার\"।\n\nভোরবেলা হাঁটা, রেডিওতে খবর আর বিকেলে বাগানের যত্ন, এই ছিল তাঁর দিন। কখনো উঁচু গলায় কথা বলতে শুনিনি।",
                 'lessons' => [['text' => 'সৎ থাকো, বাকিটা আল্লাহ দেখবেন।'], ['text' => 'বই কখনো ধার দিয়ে ফেরত চাইতে লজ্জা পেয়ো না।'], ['text' => 'মানুষকে সম্মান দাও, সে যেই হোক।']],
-                'gallery' => [self::img('landscape-c'), self::img('flowers'), self::img('friends')],
+                'gallery' => [self::img('landscape-c'), self::img('landscape-a'), self::img('flowers')],
                 'prayer' => 'আল্লাহ তাঁকে জান্নাতুল ফেরদৌস দান করুন।',
                 'from_family' => 'রহমান পরিবার',
             ],
