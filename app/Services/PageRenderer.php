@@ -114,6 +114,16 @@ class PageRenderer
         $fields = $template->fields->map->toSchema();
         $known = collect($layout['fields'])->pluck('key')->all();
 
+        // Background music never shows up as a photo: pull it out before the template sees the media.
+        $own = $media['music'][0]['url'] ?? null;
+        unset($media['music']);
+        $choice = (string) ($content['music'] ?? '');
+        $music = match (true) {
+            $choice === 'custom' && $own !== null => ['src' => $own, 'title' => 'আপনার গান'],
+            isset(TemplateRegistry::MUSIC[$choice]) => ['src' => TemplateRegistry::musicUrl($choice), 'title' => TemplateRegistry::MUSIC[$choice]['title']],
+            default => null,
+        };
+
         $data = new TemplateData($content, $media, $fields, $theme, $known, $extra['placeholders'] ?? []);
         unset($extra['placeholders']);
 
@@ -123,6 +133,7 @@ class PageRenderer
             'theme' => $theme,
             'fontsUrl' => TemplateRegistry::googleFontsUrl($theme),
             'brandingText' => $this->settings->get('branding_text', 'Created with GolpoBari ❤️'),
+            'music' => $music,
         ]));
     }
 }

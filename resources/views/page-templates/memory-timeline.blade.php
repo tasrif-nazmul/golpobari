@@ -1,6 +1,10 @@
 @extends('page-templates._base')
 @section('body')
 @php $cover = $d->image('cover_photo'); $photos = $d->gallery('gallery'); $items = $d->items('timeline'); @endphp
+@include('page-templates.partials.gate', [
+    'style' => 'book', 'mode' => 'hearts', 'eyebrow' => $d->text('your_name').' ♡ '.$d->text('their_name'),
+    'title' => $d->text('title', 'আমাদের গল্প'), 'sub' => 'প্রথম পাতা থেকে শুরু করি…', 'btn' => 'ফিতে খুলে স্মৃতির খাতাটা পড়ো',
+])
 <header class="t-grain relative overflow-hidden px-5 pb-16 pt-16 text-center sm:pt-24">
     <p class="font-accent t-reveal text-3xl t-accent" {{ $d->f('your_name their_name') }}>{{ $d->text('your_name') }} ♡ {{ $d->text('their_name') }}</p>
     <h1 class="font-heading mt-3 text-5xl leading-tight t-primary sm:text-7xl" data-split {{ $d->f('title') }}>{{ $d->text('title', 'আমাদের গল্প') }}</h1>

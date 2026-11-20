@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Str;
+
 /**
  * Code-side catalogue of template layouts.
  *
@@ -39,7 +41,60 @@ class TemplateRegistry
     /** Fonts always loaded alongside the template's choices so Bangla renders well. */
     private const BANGLA_FALLBACKS = ['Hind+Siliguri:wght@400;500;600;700', 'Noto+Serif+Bengali:wght@400;600;700'];
 
+    /** Built-in background music (original tracks made for GolpoBari, see tools/music). */
+    public const MUSIC = [
+        'prem' => ['title' => 'প্রেমের সুর', 'mood' => 'নরম, রোমান্টিক পিয়ানো', 'icon' => '💞'],
+        'khushi' => ['title' => 'খুশির দিন', 'mood' => 'হাসিখুশি, জন্মদিনের মতো', 'icon' => '🎈'],
+        'smriti' => ['title' => 'স্মৃতির পাতা', 'mood' => 'মিউজিক বক্স, একটু মন কেমন করা', 'icon' => '📖'],
+        'utsob' => ['title' => 'উৎসবের রং', 'mood' => 'ঢোল আর বাঁশি, উৎসবের আমেজ', 'icon' => '🪘'],
+        'nouka' => ['title' => 'নৌকার গান', 'mood' => 'গিটার আর বাঁশি, ভ্রমণের মতো হালকা', 'icon' => '⛵'],
+        'prodip' => ['title' => 'শান্ত প্রদীপ', 'mood' => 'শান্ত তানপুরা আর বাঁশি', 'icon' => '🪔'],
+    ];
+
+    /** Default song per layout (used for samples and pre-selected in the order form). */
+    private const LAYOUT_MUSIC = [
+        'romantic-story' => 'prem', 'love-letter' => 'prem', 'our-journey' => 'prem', 'proposal' => 'prem', 'reasons-cards' => 'prem',
+        'birthday-celebration' => 'khushi', 'gift-surprise' => 'khushi',
+        'memory-timeline' => 'smriti', 'photo-memories' => 'smriti',
+        'event-invitation' => 'utsob', 'festival-greeting' => 'utsob',
+        'travel-diary' => 'nouka', 'tribute' => 'prodip',
+    ];
+
+    public static function musicUrl(?string $key): ?string
+    {
+        return $key && isset(self::MUSIC[$key]) ? asset('audio/'.$key.'.mp3') : null;
+    }
+
+    public static function defaultMusic(?string $layout): string
+    {
+        return self::LAYOUT_MUSIC[$layout] ?? '';
+    }
+
+    /** The background-music field every layout gets. */
+    public static function musicField(?string $layout = null): array
+    {
+        return self::f('music', 'পেজের গান', 'music', [
+            'help' => 'পেজ খুললে হালকা করে বাজবে। আমাদের গান থেকে বাছুন বা নিজের পছন্দের গান দিন।',
+            'placeholder' => self::defaultMusic($layout),
+        ]);
+    }
+
     public static function layouts(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $cache = self::baseLayouts();
+        foreach ($cache as $key => &$layout) {
+            $layout['fields'][] = self::musicField($key);
+            $layout['sample']['music'] = self::defaultMusic($key);
+        }
+
+        return $cache;
+    }
+
+    private static function baseLayouts(): array
     {
         return [
             'minimal-portfolio' => self::minimalPortfolio(),
@@ -95,9 +150,16 @@ class TemplateRegistry
             $placed = array_merge($placed, $f);
             $out[] = ['title' => $sec['title'], 'where' => $sec['where'], 'icon' => $sec['icon'], 'fields' => $f];
         }
+        if (in_array('music', $keys, true) && ! in_array('music', $placed, true)) {
+            $placed[] = 'music';
+            $music = ['title' => 'পেজের গান', 'where' => 'পেজ খুললেই পেছনে হালকা করে বাজবে, কোণে থাকবে চালু/বন্ধের বোতাম', 'icon' => '🎵', 'fields' => ['music']];
+        }
         $rest = array_values(array_diff($keys, $placed));
         if ($rest) {
             $out[] = ['title' => 'আরও কিছু', 'where' => 'পেজের নিচের দিকে আলাদা অংশে দেখাবে', 'icon' => '➕', 'fields' => $rest];
+        }
+        if (! empty($music)) {
+            $out[] = $music;
         }
         $total = count($out);
         foreach ($out as $i => &$sec) {
@@ -115,7 +177,7 @@ class TemplateRegistry
             } elseif (is_array($v) && isset($v[0]) && is_array($v[0])) {
                 $examples[$k] = ['row' => $v[0], 'count' => count($v)];
             } elseif (is_string($v) && $v !== '') {
-                $examples[$k] = ['text' => \Illuminate\Support\Str::limit(preg_replace('/\s+/u', ' ', $v), 90)];
+                $examples[$k] = ['text' => Str::limit(preg_replace('/\s+/u', ' ', $v), 90)];
             }
         }
 
@@ -502,7 +564,7 @@ class TemplateRegistry
                 'gallery' => [self::img('cafe'), self::img('art-b'), self::img('cake')],
                 'phone' => '01700-000000', 'whatsapp' => '01700-000000', 'email' => 'hello@rafiscafe.com',
                 'address' => 'House 12, Road 27, Dhanmondi, Dhaka', 'map_link' => '',
-                'hours' => "Every day: 9am – 11pm",
+                'hours' => 'Every day: 9am – 11pm',
                 'social_links' => [['platform' => 'Facebook', 'url' => '#'], ['platform' => 'Instagram', 'url' => '#']],
             ],
         ];
@@ -573,7 +635,12 @@ class TemplateRegistry
                 'title' => 'মেঘের দেশে তিন দিন', 'subtitle' => 'Five friends, one jeep and too much tea.', 'date_text' => 'মার্চ ২০২৫ · সাজেক',
                 'cover_photo' => self::img('landscape-a'),
                 'intro' => 'অনেকদিনের প্ল্যান, অবশেষে বেরিয়ে পড়া। এই অ্যালবামটা সেই তিন দিনের জন্য।',
-                'gallery' => array_map(function ($n, $c) { $i = self::img($n); $i['caption'] = $c; return $i; },
+                'gallery' => array_map(function ($n, $c) {
+                    $i = self::img($n);
+                    $i['caption'] = $c;
+
+                    return $i;
+                },
                     ['landscape-b', 'friends', 'landscape-c', 'art-a', 'landscape-a', 'flowers'],
                     ['ভোর ৫টা, মেঘ তখনো ঘুমায়', 'চান্দের গাড়ির ছাদে', 'কংলাক পাহাড়ের পথে', 'রাতের আগুন', 'শেষ বিকেল', 'পাহাড়ি ফুল']),
                 'people' => 'Mitu, Rafi, Tanha, Sakib, Nodi',
@@ -616,7 +683,7 @@ class TemplateRegistry
     }
 
     /* ------------------------------------------------------------------ */
-    /* Order-form guide: page sections from top to bottom                  */
+    /* Order-form guide: page sections from top to bottom */
     /* ------------------------------------------------------------------ */
 
     private static function sec(string $icon, string $title, string $where, array $fields): array
@@ -742,7 +809,7 @@ class TemplateRegistry
     }
 
     /* ------------------------------------------------------------------ */
-    /* New layouts                                                         */
+    /* New layouts */
     /* ------------------------------------------------------------------ */
 
     private static function proposal(): array
@@ -869,7 +936,12 @@ class TemplateRegistry
                     ['day' => 'দিন ৩', 'place' => 'বগা লেক', 'story' => 'রাতে আগুনের পাশে গান, আকাশ ভর্তি তারা।'],
                 ],
                 'stats' => [['value' => '৩৭', 'label' => 'কাপ চা'], ['value' => '৪', 'label' => 'বার পথ হারানো'], ['value' => '১২০০', 'label' => 'ছবি তোলা']],
-                'gallery' => array_map(function ($n, $c) { $i = self::img($n); $i['caption'] = $c; return $i; },
+                'gallery' => array_map(function ($n, $c) {
+                    $i = self::img($n);
+                    $i['caption'] = $c;
+
+                    return $i;
+                },
                     ['landscape-a', 'friends', 'landscape-c', 'art-a'], ['মেঘের সমুদ্র', 'চার পাগল', 'ঝর্নার পথে', 'রাতের আগুন']),
                 'closing_note' => 'পরের ট্রিপ? সেন্ট মার্টিন। ডেট ঠিক হয়নি, কিন্তু যাবই।',
             ],

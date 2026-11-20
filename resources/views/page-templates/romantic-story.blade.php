@@ -6,11 +6,11 @@
     $rel = $d->text('relationship');
 @endphp
 @include('page-templates.partials.gate', [
-    'icon' => '💌', 'mode' => 'hearts',
+    'style' => 'envelope', 'icon' => '💌', 'mode' => 'hearts', 'initial' => mb_substr($d->text('their_name'), 0, 1),
     'eyebrow' => $rel ? 'For my '.strtolower($rel) : 'For you',
     'title' => $d->text('their_name').', তোমার জন্য',
     'sub' => 'কিছু কথা অনেকদিন ধরে জমিয়ে রেখেছি…',
-    'btn' => 'খুলে দেখো',
+    'btn' => 'সিলমোহর ছুঁয়ে চিঠিটা খোলো',
 ])
 
 <header class="relative overflow-hidden px-5 pb-20 pt-16 text-center sm:pt-24">

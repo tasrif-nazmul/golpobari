@@ -17,6 +17,7 @@ class TemplateField extends Model
         'select' => 'Dropdown',
         'color' => 'Colour',
         'repeater' => 'List of items',
+        'music' => 'Background music',
         'image' => 'Single photo',
         'gallery' => 'Photo gallery',
     ];

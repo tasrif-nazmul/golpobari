@@ -1,6 +1,10 @@
 @extends('page-templates._base')
 @section('body')
 @php $cover = $d->image('cover_photo'); $people = $d->list('people'); @endphp
+@include('page-templates.partials.gate', [
+    'style' => 'book', 'eyebrow' => 'অ্যালবাম · '.$d->text('date_text'), 'title' => $d->text('title'),
+    'sub' => $d->text('subtitle', 'ছবিগুলো দেখতে পাতা উল্টাও'), 'btn' => 'অ্যালবামটা খোলো', 'flowerColor' => '#f6d6a8', 'ribbon' => '#7b5b3a',
+])
 <header class="relative min-h-[92svh] overflow-hidden" {{ $d->f('cover_photo') }}>
     @if ($cover)<img src="{{ $cover['url'] }}" alt="" class="absolute inset-0 h-full w-full scale-105 object-cover" style="animation: t-kenburns 18s ease-in-out infinite alternate" width="1200" height="1500">@endif
     <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-[var(--t-bg)]"></div>

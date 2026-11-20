@@ -1,34 +1,59 @@
 @extends('layouts.site')
+@php
+    $payload = $template->previewPayload();
+    $guide = \App\Support\TemplateRegistry::guide($template->layout, $template->fields->map->toSchema()->all(), $template->sampleContent());
+@endphp
 @section('content')
-<section class="px-4 pb-6 pt-6 sm:px-6 md:pt-10" x-data="{ device: window.innerWidth < 768 ? 'mobile' : 'desktop' }">
+<section class="px-4 pb-10 pt-4 sm:px-6 md:pt-8">
     <div class="container-x">
         <a href="{{ route('templates.index', ['category' => $template->category->slug]) }}" class="text-sm font-semibold text-ink-mute hover:text-ink">← {{ $template->category->displayName() }}</a>
-        <div class="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
-                <h1 class="font-serif text-[2.1rem] font-bold leading-tight sm:text-5xl">{{ $template->name }}</h1>
-                <p class="mt-2 max-w-2xl text-lg text-ink-soft">{{ $template->description }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="inline-flex rounded-full bg-white p-1 ring-1 ring-ink/10" role="group" aria-label="প্রিভিউ সাইজ">
-                    <button type="button" @click="device = 'mobile'" :aria-pressed="device === 'mobile'" :class="device === 'mobile' ? 'bg-ink text-paper' : 'text-ink-soft'" class="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"><x-icon name="mobile" class="h-4 w-4" /> মোবাইল</button>
-                    <button type="button" @click="device = 'desktop'" :aria-pressed="device === 'desktop'" :class="device === 'desktop' ? 'bg-ink text-paper' : 'text-ink-soft'" class="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"><x-icon name="desktop" class="h-4 w-4" /> ডেস্কটপ</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-8 flex justify-center">
-            <div class="transition-all duration-500" :class="device === 'mobile' ? 'w-[min(390px,100%)]' : 'w-full'">
-                <div class="overflow-hidden bg-white shadow-[var(--shadow-lift)] ring-1 ring-ink/10" :class="device === 'mobile' ? 'rounded-[2.2rem] border-[10px] border-ink' : 'rounded-2xl'">
-                    <div x-show="device === 'desktop'" class="flex items-center gap-1.5 border-b border-ink/5 bg-paper-2/60 px-4 py-2.5">
-                        <span class="h-2.5 w-2.5 rounded-full bg-sindoor/70"></span><span class="h-2.5 w-2.5 rounded-full bg-holud/80"></span><span class="h-2.5 w-2.5 rounded-full bg-kolapata/60"></span>
-                        <span class="ml-3 rounded-full bg-white px-3 py-0.5 text-xs text-ink-mute">golpobari.com/<b class="text-ink">your-name</b></span>
+        <div class="mt-5 grid items-start gap-10 md:grid-cols-[auto_1fr] md:gap-14">
+            {{-- The real page, live, in a phone. Tap it, scroll it, hear it. --}}
+            <div class="relative mx-auto w-full max-w-[24rem] md:sticky md:top-24 md:w-[23rem]">
+                <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[3rem] opacity-60 blur-2xl" style="background: radial-gradient(closest-side, color-mix(in oklab, {{ $template->category->accent_color ?: '#e3ad4a' }} 55%, transparent), transparent)"></div>
+                <div class="phone" style="height: min(780px, 78dvh); aspect-ratio: auto">
+                    <div class="phone__screen">
+                        <iframe src="{{ route('templates.render', $template) }}" title="{{ $template->name }} লাইভ প্রিভিউ" allow="autoplay" class="h-full w-full"></iframe>
                     </div>
-                    <iframe src="{{ route('templates.render', $template) }}" title="{{ $template->name }} প্রিভিউ" loading="lazy"
-                            class="block w-full bg-white" :class="device === 'mobile' ? 'h-[720px] max-h-[75vh]' : 'h-[78vh] min-h-[560px]'"></iframe>
+                </div>
+                <p class="mt-4 text-center text-sm text-ink-mute">👆 ছুঁয়ে, স্ক্রল করে দেখুন। এটাই আসল পেজ, শুধু লেখা আর ছবি নমুনা।</p>
+            </div>
+
+            <div>
+                <p class="text-sm font-semibold text-ink-mute">{{ $payload['category'] }}</p>
+                <h1 class="font-fancy mt-1 text-[2.8rem] leading-tight sm:text-6xl">{{ $template->name }}</h1>
+                <p class="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">{{ $template->description }}</p>
+
+                <div class="mt-6 flex flex-wrap gap-2">
+                    @if ($payload['music'])<span class="chip !bg-night !text-paper"><span class="flex h-3 items-end gap-[2px] text-holud"><i class="eq-bar"></i><i class="eq-bar [animation-delay:-.3s]"></i><i class="eq-bar [animation-delay:-.6s]"></i></span> গান: {{ $payload['music'] }}</span>@endif
+                    <span class="chip">✨ অ্যানিমেশন</span>
+                    <span class="chip">📱 মোবাইলে সুন্দর</span>
+                    <span class="chip">🔗 নিজের লিংক</span>
+                </div>
+
+                <div x-data class="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <a href="{{ $payload['order'] }}" class="btn btn-primary text-lg">এই টেমপ্লেট দিয়ে বানাই <x-icon name="arrow-right" class="h-5 w-5" /></a>
+                    <button type="button" class="btn btn-ghost text-lg md:hidden" @click="$dispatch('tpl-preview', @js($payload))">পুরো স্ক্রিনে দেখুন</button>
+                </div>
+
+                <div class="mt-12">
+                    <h2 class="text-2xl font-bold">পেজটা উপর থেকে নিচে যেমন</h2>
+                    <p class="mt-1 text-ink-soft">অর্ডারের সময় ঠিক এই অংশগুলোর জন্যই লেখা আর ছবি চাওয়া হবে।</p>
+                    <ol class="mt-6 space-y-3">
+                        @foreach ($guide['sections'] as $sec)
+                            <li class="flex gap-4 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)]">
+                                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-paper-2 text-xl">{{ $sec['icon'] }}</span>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-sindoor">অংশ {{ \App\Support\Bn::digits($sec['n']) }}</p>
+                                    <h3 class="font-sans text-lg font-semibold leading-snug">{{ $sec['title'] }}</h3>
+                                    <p class="text-sm leading-snug text-ink-soft">{{ $sec['where'] }}</p>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ol>
                 </div>
             </div>
         </div>
-        <p class="mt-4 text-center text-sm text-ink-mute">নমুনা লেখা ও ছবি দেখানো হচ্ছে। আপনার পেজে থাকবে আপনার গল্প।</p>
     </div>
 </section>
 
@@ -45,10 +70,7 @@
 @endsection
 
 @push('sticky')
-<div class="sticky bottom-0 z-40 border-t border-ink/10 bg-paper/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-    <div class="container-x flex items-center justify-between gap-4">
-        <p class="hidden font-semibold sm:block">{{ $template->name }} পছন্দ হয়েছে?</p>
-        <a href="{{ route('order.create', ['template' => $template->slug]) }}" class="btn btn-primary w-full sm:w-auto">এই টেমপ্লেট দিয়ে বানাই <x-icon name="arrow-right" class="h-5 w-5" /></a>
-    </div>
+<div class="sticky bottom-0 z-40 border-t border-ink/10 bg-paper/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:hidden">
+    <a href="{{ $payload['order'] }}" class="btn btn-primary w-full">এই টেমপ্লেট দিয়ে বানাই <x-icon name="arrow-right" class="h-5 w-5" /></a>
 </div>
 @endpush

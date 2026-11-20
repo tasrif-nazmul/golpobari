@@ -48,6 +48,7 @@ class OrderController extends Controller
                 'name' => $t->name,
                 'tagline' => $t->tagline,
                 'preview' => $t->previewUrl(),
+                'shots' => $t->phoneShots(),
                 'render' => route('templates.render', $t),
                 'max_photos' => $t->max_photos,
                 'fields' => $t->fields->map->toSchema()->values(),
@@ -74,7 +75,9 @@ class OrderController extends Controller
                 'packages' => $packages,
                 'preselect' => ['template' => $request->query('template'), 'package' => $request->query('package')],
                 'bkash' => ['number' => $settings->bkashNumber(), 'type' => $settings->get('bkash_account_type'), 'instructions' => $settings->get('payment_instructions')],
+                'tracks' => collect(TemplateRegistry::MUSIC)->map(fn ($t, $k) => $t + ['key' => $k, 'url' => TemplateRegistry::musicUrl($k)])->values(),
                 'limits' => [
+                    'audio_mb' => ImageService::AUDIO_MAX_KB / 1024,
                     'max_mb' => (float) $settings->get('max_file_mb', 8),
                     'max_files' => (int) $settings->get('max_files_per_order', 30),
                     'types' => array_values(array_intersect(explode(',', strtolower(str_replace(' ', '', $settings->get('allowed_types', 'jpg,jpeg,png,webp')))), config('golpobari.images.allowed_extensions'))),
@@ -98,6 +101,10 @@ class OrderController extends Controller
 
     public function upload(Request $request, ImageService $images, Settings $settings): JsonResponse
     {
+        if ($request->input('field') === 'music') {
+            return $this->uploadMusic($request, $images);
+        }
+
         $maxKb = (int) round(((float) $settings->get('max_file_mb', 8)) * 1024);
         $types = array_intersect(explode(',', strtolower(str_replace(' ', '', $settings->get('allowed_types', 'jpg,jpeg,png,webp')))), config('golpobari.images.allowed_extensions'));
 
@@ -123,6 +130,28 @@ class OrderController extends Controller
         }
 
         return response()->json(['id' => $media->id, 'thumb' => $media->url(true), 'url' => $media->url(), 'width' => $media->width, 'height' => $media->height]);
+    }
+
+    /** A customer's own song for the page. One per draft; the old one is replaced. */
+    private function uploadMusic(Request $request, ImageService $images): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:'.ImageService::AUDIO_MAX_KB, 'mimes:mp3,m4a,aac,ogg,oga,wav,mp4'],
+        ], [
+            'file.max' => 'গানের ফাইলটি '.Bn::digits(ImageService::AUDIO_MAX_KB / 1024).' MB-এর বেশি বড়।',
+            'file.mimes' => 'শুধু MP3, M4A, AAC, OGG বা WAV গান দেওয়া যাবে।',
+        ]);
+
+        $token = $this->draftToken($request);
+        PageMedia::where('draft_token', $token)->whereNull('order_id')->where('field_key', 'music')->get()->each(fn ($m) => $images->delete($m));
+
+        try {
+            $media = $images->storeAudioDraft($request->file('file'), $token);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['id' => $media->id, 'url' => $media->url(), 'name' => $media->original_name]);
     }
 
     public function deleteUpload(Request $request, PageMedia $media, ImageService $images): JsonResponse

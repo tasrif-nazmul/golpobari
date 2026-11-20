@@ -1,6 +1,11 @@
 @extends('page-templates._base')
 @section('body')
 @php $photo = $d->image('photo'); $date = $d->date('letter_date'); @endphp
+@include('page-templates.partials.gate', [
+    'style' => 'envelope', 'icon' => '✉️', 'mode' => 'hearts', 'initial' => mb_substr($d->text('from_name'), 0, 1),
+    'eyebrow' => 'ডাকে একটা চিঠি এসেছে', 'title' => $d->text('to_name').'-এর জন্য',
+    'btn' => 'সিলমোহর ছুঁয়ে চিঠিটা খোলো',
+])
 <main class="t-grain relative min-h-dvh overflow-hidden px-4 py-14 sm:py-20" style="background-image: radial-gradient(color-mix(in oklab, var(--t-text) 7%, transparent) 1px, transparent 1px); background-size: 18px 18px">
     @include('page-templates.partials.particles', ['chars' => ['❀', '✿', '❁'], 'count' => 10, 'class' => 't-accent opacity-60'])
 

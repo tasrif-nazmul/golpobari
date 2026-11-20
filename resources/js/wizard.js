@@ -41,7 +41,8 @@ export function orderWizard(boot) {
         payment: { sender: '', trx: '', amount: '' },
         confirm: false, agree: false,
         errors: {}, stepError: '', submitting: false,
-        previewHtml: '', previewLoading: false, previewDevice: 'mobile', previewModal: null,
+        previewHtml: '', previewLoading: false, previewModal: null,
+        playing: null, _sample: null,
         activeField: null, previewOpen: false, liveLoading: false, liveDirty: true, _liveT: null,
 
         init() {
@@ -51,6 +52,7 @@ export function orderWizard(boot) {
                 const cat = this.boot.catalog.find((c) => c.templates.some((t) => t.slug === pre.template));
                 if (this.templateSlug !== pre.template) { this.categorySlug = cat.slug; this.selectTemplate(pre.template, false); this.step = 3; }
             }
+            if (this.musicField && !this.content[this.musicField.key]) this.content[this.musicField.key] = this.musicField.placeholder || '';
             if (pre.package && this.boot.packages.some((p) => p.slug === pre.package)) this.packageSlug = pre.package;
             if (!this.packageSlug) this.packageSlug = (this.boot.packages.find((p) => p.featured) || this.boot.packages[0] || {}).slug || null;
 
@@ -75,6 +77,7 @@ export function orderWizard(boot) {
         get template() { return this.findTemplate(this.templateSlug); },
         findTemplate(slug) { for (const c of this.boot.catalog) { const t = c.templates.find((x) => x.slug === slug); if (t) return t; } return null; },
         get textFields() { return (this.template?.fields || []).filter((f) => !['image', 'gallery'].includes(f.type)); },
+        get musicField() { return (this.template?.fields || []).find((f) => f.type === 'music') || null; },
         get mediaFields() { return (this.template?.fields || []).filter((f) => ['image', 'gallery'].includes(f.type)); },
         /* The template's page map: sections from top to bottom, each with its fields. */
         get sections() {
@@ -95,7 +98,7 @@ export function orderWizard(boot) {
         exampleImage(f) { return this.template?.guide?.examples?.[f.key]?.image || null; },
         rowExample(f, sub) { const r = this.template?.guide?.examples?.[f.key]?.row; return r && r[sub] ? 'যেমন: ' + r[sub] : ''; },
         get package() { return this.boot.packages.find((p) => p.slug === this.packageSlug) || null; },
-        get photoCount() { return Object.values(this.media).flat().filter((m) => m.id).length; },
+        get photoCount() { return Object.entries(this.media).filter(([k]) => k !== 'music').flatMap(([, v]) => v).filter((m) => m.id).length; },
         get uploading() { return Object.values(this.media).flat().some((m) => m.uploading); },
         get photoLimit() {
             return Math.min(this.boot.limits.max_files || 999, this.template?.max_photos || 999, this.package?.max_photos || 999);
@@ -121,11 +124,13 @@ export function orderWizard(boot) {
             const content = {};
             t.fields.forEach((f) => {
                 if (f.type === 'repeater') content[f.key] = Array.isArray(this.content[f.key]) ? this.content[f.key] : [];
+                else if (f.type === 'music') content[f.key] = this.content[f.key] || f.placeholder || '';
                 else if (!['image', 'gallery'].includes(f.type)) content[f.key] = this.content[f.key] ?? '';
             });
             this.content = content;
             const media = {};
             this.mediaFields.forEach((f) => (media[f.key] = this.media[f.key] || []));
+            if (this.musicField) media.music = this.media.music || [];
             this.media = media;
             if (prev && prev.slug !== slug) this.previewHtml = '';
             if (advance) this.next();
@@ -251,6 +256,56 @@ export function orderWizard(boot) {
                 xhr.onerror = () => { item.error = 'ইন্টারনেট সংযোগ দেখুন'; item.uploading = false; resolve(); };
                 xhr.send(fd);
             });
+        },
+        /* ---------------- background music ---------------- */
+        musicLabel(v) {
+            if (v === 'custom') return 'নিজের গান';
+            if (v === 'none' || !v) return 'গান ছাড়া';
+            const t = (this.boot.tracks || []).find((x) => x.key === v); return t ? t.icon + ' ' + t.title : v;
+        },
+        toggleSample(t) {
+            if (this.playing === t.key) return this.stopSample();
+            this.stopSample();
+            if (t.key !== 'custom' && this.musicField) this.content[this.musicField.key] = t.key;
+            const a = new Audio(t.url); a.volume = 0.7; this._sample = a; this.playing = t.key;
+            a.play().catch(() => { this.playing = null; });
+            a.onended = () => { this.playing = null; };
+            clearTimeout(this._sampleT); this._sampleT = setTimeout(() => this.stopSample(), 30000);
+        },
+        stopSample() { if (this._sample) { this._sample.pause(); this._sample = null; } this.playing = null; },
+        async onMusic(field, ev) {
+            const file = (ev.target.files || [])[0]; ev.target.value = ''; if (!file) return;
+            this.stopSample();
+            if ((this.media.music || []).some((m) => m.id)) await this.removeMusic(field, false);
+            const item = { key: Math.random().toString(36).slice(2), id: null, url: null, name: file.name, uploading: true, progress: 0, error: '' };
+            this.media.music = [item];
+            const ref = this.media.music[0];
+            this.content[field.key] = 'custom';
+            const okType = /^audio\//.test(file.type) || /\.(mp3|m4a|aac|ogg|wav)$/i.test(file.name);
+            if (!okType) { ref.uploading = false; ref.error = 'শুধু MP3 বা M4A গান দিন'; return; }
+            if (file.size > this.boot.limits.audio_mb * 1024 * 1024) { ref.uploading = false; ref.error = `${bn(this.boot.limits.audio_mb)} MB-এর বেশি বড়`; return; }
+            const fd = new FormData(); fd.append('file', file, file.name); fd.append('field', 'music');
+            await new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', this.boot.urls.upload);
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrf()); xhr.setRequestHeader('Accept', 'application/json');
+                xhr.upload.onprogress = (e) => { if (e.lengthComputable) ref.progress = Math.round((e.loaded / e.total) * 100); };
+                xhr.onload = () => {
+                    let j = {}; try { j = JSON.parse(xhr.responseText); } catch (e) {}
+                    if (xhr.status >= 200 && xhr.status < 300) { ref.id = j.id; ref.url = j.url; ref.name = j.name || ref.name; }
+                    else ref.error = j.message || (j.errors && Object.values(j.errors)[0]?.[0]) || (xhr.status === 413 ? 'ফাইলটি অনেক বড়' : 'আপলোড হয়নি');
+                    ref.uploading = false; resolve();
+                };
+                xhr.onerror = () => { ref.error = 'ইন্টারনেট সংযোগ দেখুন'; ref.uploading = false; resolve(); };
+                xhr.send(fd);
+            });
+        },
+        async removeMusic(field, reset = true) {
+            this.stopSample();
+            const item = (this.media.music || [])[0];
+            this.media.music = [];
+            if (reset && this.content[field.key] === 'custom') this.content[field.key] = field.placeholder || 'none';
+            if (item?.id) { try { await fetch(`${this.boot.urls.deleteUpload}/${item.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' } }); } catch (e) {} }
         },
         /* Downscale big phone photos before upload: faster on mobile data, lighter on the server. */
         async shrink(file, max = 2400) {

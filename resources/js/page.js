@@ -143,15 +143,46 @@ const gate = () => {
     const g = document.querySelector('[data-gate]'); if (!g) return;
     if (isDraft) { g.remove(); return; }
     document.documentElement.classList.add('has-gate');
+    const tactile = ['envelope', 'book'].includes(g.dataset.gateStyle);
+    const hold = reduce ? 0 : (g.dataset.gateStyle === 'book' ? 1650 : 1450);
     const open = () => {
-        g.classList.add('is-open');
-        document.documentElement.classList.remove('has-gate');
-        setTimeout(() => { g.remove(); document.dispatchEvent(new CustomEvent('gb:opened')); }, reduce ? 0 : 1100);
-        if (g.dataset.gate === 'confetti') setTimeout(() => confetti(), 350);
-        if (g.dataset.gate === 'hearts') setTimeout(() => confetti({ emoji: ['❤', '💕', '🌸'], count: 50 }), 350);
+        document.dispatchEvent(new CustomEvent('gb:opening'));
+        if (tactile) g.classList.add('is-opening');
+        setTimeout(() => {
+            g.classList.add('is-open');
+            document.documentElement.classList.remove('has-gate');
+            if (g.dataset.gate === 'confetti') setTimeout(() => confetti(), 250);
+            if (g.dataset.gate === 'hearts') setTimeout(() => confetti({ emoji: ['❤', '💕', '🌸'], count: 50 }), 250);
+            setTimeout(() => { g.remove(); document.dispatchEvent(new CustomEvent('gb:opened')); }, reduce ? 0 : 1100);
+        }, tactile ? hold : 0);
     };
     g.querySelector('[data-gate-open]')?.addEventListener('click', open, { once: true });
     g.querySelector('[data-gate-open]')?.focus({ preventScroll: true });
+};
+
+/* ---------- background music: starts on the first tap (browsers block sound before that) ---------- */
+const music = () => {
+    const box = document.querySelector('[data-music]'); if (!box) return;
+    const btn = box.querySelector('[data-music-toggle]');
+    const audio = new Audio(); audio.src = box.dataset.src; audio.loop = true; audio.preload = isDraft ? 'none' : 'auto'; audio.volume = 0;
+    let wanted = !box.hasAttribute('data-manual'), fadeT = null;
+    const fade = (to, ms = 1600) => {
+        clearInterval(fadeT); const from = audio.volume, t0 = performance.now();
+        fadeT = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / ms); audio.volume = from + (to - from) * k; if (k === 1) { clearInterval(fadeT); if (to === 0) audio.pause(); } }, 40);
+    };
+    const set = (on) => { box.classList.toggle('is-playing', on); btn.setAttribute('aria-pressed', String(on)); btn.setAttribute('aria-label', on ? 'গান বন্ধ করুন' : 'গান চালু করুন'); };
+    const play = async () => {
+        try { await audio.play(); set(true); fade(0.6); box.classList.add('show-hint'); setTimeout(() => box.classList.remove('show-hint'), 3200); return true; } catch (e) { set(false); return false; }
+    };
+    const stop = () => { set(false); fade(0, 500); };
+    btn.addEventListener('click', (e) => { e.stopPropagation(); if (box.classList.contains('is-playing')) { wanted = false; stop(); } else { wanted = true; play(); } });
+    if (!wanted) return;
+    // Try right away (works when the visitor already interacted with the site), otherwise wait for the first tap anywhere.
+    const first = (e) => { if (e && btn.contains(e.target)) return; if (wanted && !box.classList.contains('is-playing')) play(); ['pointerdown', 'keydown', 'touchend'].forEach((t) => document.removeEventListener(t, first, true)); };
+    ['pointerdown', 'keydown', 'touchend'].forEach((t) => document.addEventListener(t, first, true));
+    document.addEventListener('gb:opening', () => wanted && play());
+    if (!document.querySelector('[data-gate]')) play().then((ok) => { if (!ok) { box.classList.add('show-hint'); setTimeout(() => box.classList.remove('show-hint'), 4000); } });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && !audio.paused) audio.pause(); else if (!document.hidden && wanted && box.classList.contains('is-playing')) audio.play().catch(() => {}); });
 };
 
 /* ---------- envelope (love letter) ---------- */
@@ -374,7 +405,7 @@ const lightbox = () => {
 document.documentElement.classList.remove('no-js');
 const boot = () => {
     split(); reveal(); typewriter(); counters(); countdowns(); bursts(); envelopes(); flips(); shuffles(); scratches();
-    giftboxes(); candles(); proposal(); sequences(); lamps(); copies(); draws(); tilts(); progress(); lightbox(); gate();
+    giftboxes(); candles(); proposal(); sequences(); lamps(); copies(); draws(); tilts(); progress(); lightbox(); gate(); music();
     // Pages without a gate still get their confetti welcome.
     if (!document.querySelector('[data-gate]') && document.querySelector('[data-confetti]') && !isDraft) setTimeout(() => confetti(), 500);
     window.gbConfetti = confetti;

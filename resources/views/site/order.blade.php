@@ -71,10 +71,16 @@
             <div class="grid gap-4 sm:grid-cols-2">
                 <template x-for="t in (category ? category.templates : [])" :key="t.slug">
                     <div class="card overflow-hidden transition" :class="templateSlug === t.slug ? 'ring-[3px] ring-ink' : ''">
-                        <button type="button" class="relative block aspect-[4/3] w-full overflow-hidden bg-paper-2" @click="previewModal = t" :aria-label="t.name + ' প্রিভিউ'">
-                            <template x-if="t.preview"><img :src="t.preview" :alt="t.name" class="h-full w-full object-cover object-top" loading="lazy"></template>
-                            <template x-if="!t.preview"><span class="grid h-full place-items-center font-serif text-2xl text-ink-mute" x-text="t.name"></span></template>
-                            <span class="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow">প্রিভিউ ↗</span>
+                        <button type="button" class="tcard__stage group relative block w-full !aspect-[4/3.2]" style="--tint: #f3e6cf" @click="previewModal = t" :aria-label="t.name + ' প্রিভিউ'">
+                            <template x-if="t.shots">
+                                <span>
+                                    <span class="phone phone--sm tcard__back !top-[8%] !w-[32%]"><span class="phone__screen block"><img :src="t.shots.inside" alt="" loading="lazy"></span></span>
+                                    <span class="phone phone--sm tcard__front !left-[18%] !top-[10%] !w-[34%]"><span class="phone__screen block"><img :src="t.shots.cover" :alt="t.name" loading="lazy"></span></span>
+                                </span>
+                            </template>
+                            <template x-if="!t.shots && t.preview"><img :src="t.preview" :alt="t.name" class="h-full w-full object-cover object-top" loading="lazy"></template>
+                            <template x-if="!t.shots && !t.preview"><span class="grid h-full place-items-center font-serif text-2xl text-ink-mute" x-text="t.name"></span></template>
+                            <span class="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-bold shadow"><svg class="h-3 w-3 text-sindoor" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg> লাইভ দেখুন</span>
                         </button>
                         <div class="p-4">
                             <h3 class="font-serif text-xl font-semibold" x-text="t.name"></h3>
@@ -122,9 +128,9 @@
                                                 <span x-text="f.label"></span><span x-show="f.required" class="text-sindoor"> *</span>
                                                 <span x-show="!f.required" class="text-xs font-normal text-ink-mute">(ঐচ্ছিক)</span>
                                             </label>
-                                            <button type="button" class="shrink-0 rounded-full bg-sindoor/10 px-2.5 py-1 text-xs font-bold text-sindoor-dark transition hover:bg-sindoor/20" @click="showOnPage(f.key)">📍 পেজে কোথায়?</button>
+                                            <button type="button" x-show="f.type !== 'music'" class="shrink-0 rounded-full bg-sindoor/10 px-2.5 py-1 text-xs font-bold text-sindoor-dark transition hover:bg-sindoor/20" @click="showOnPage(f.key)">📍 পেজে কোথায়?</button>
                                         </div>
-                                        <div class="mb-2.5 flex items-center gap-2.5 text-sm text-ink-mute" x-show="exampleText(f) || exampleImage(f)">
+                                        <div class="mb-2.5 flex items-center gap-2.5 text-sm text-ink-mute" x-show="f.type !== 'music' && (exampleText(f) || exampleImage(f))">
                                             <span class="shrink-0 rounded bg-holud/30 px-1.5 py-0.5 text-[11px] font-bold text-ink">উদাহরণ</span>
                                             <template x-if="exampleImage(f)"><img :src="exampleImage(f)" alt="" class="h-9 w-9 shrink-0 rounded-md object-cover ring-1 ring-ink/10"></template>
                                             <span class="line-clamp-2 italic" x-text="exampleText(f) || (f.type === 'gallery' ? 'এরকম কয়েকটা ছবি' : 'এরকম একটা ছবি')"></span>
@@ -141,6 +147,52 @@
                                                 <textarea class="input" :id="'f_' + f.key" x-model="content[f.key]" :placeholder="f.placeholder || ''" rows="5"
                                                           :maxlength="f.max_length || null" :aria-invalid="!!fieldError(f.key)"></textarea>
                                                 <p class="mt-1 text-right text-xs text-ink-mute" x-show="f.max_length" x-text="bn((content[f.key] || '').length) + '/' + bn(f.max_length)"></p>
+                                            </div>
+                                        </template>
+                                        <template x-if="f.type === 'music'">
+                                            <div>
+                                                <p class="mb-3 text-sm text-ink-soft" x-text="f.help"></p>
+                                                <div class="grid gap-2.5 sm:grid-cols-2" role="radiogroup" :aria-label="f.label">
+                                                    <template x-for="t in boot.tracks" :key="t.key">
+                                                        <div role="radio" tabindex="0" :aria-checked="content[f.key] === t.key" @click="content[f.key] = t.key" @keydown.enter.prevent="content[f.key] = t.key" @keydown.space.prevent="content[f.key] = t.key"
+                                                             class="flex cursor-pointer items-center gap-3 rounded-2xl bg-white p-2.5 pr-3 ring-1 transition" :class="content[f.key] === t.key ? 'bg-sindoor/[0.06] ring-2 ring-sindoor' : 'ring-ink/10 hover:ring-ink/30'">
+                                                            <button type="button" @click.stop="toggleSample(t)" class="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-paper transition" :class="playing === t.key ? 'bg-sindoor' : 'bg-ink'" :aria-label="(playing === t.key ? 'থামান: ' : 'শুনে দেখুন: ') + t.title">
+                                                                <svg x-show="playing !== t.key" class="ml-0.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                                                                <span x-show="playing === t.key" class="flex h-4 items-end gap-[3px]"><i class="eq-bar"></i><i class="eq-bar [animation-delay:-.3s]"></i><i class="eq-bar [animation-delay:-.6s]"></i></span>
+                                                            </button>
+                                                            <span class="min-w-0 flex-1 leading-tight"><b class="block truncate" x-text="t.icon + ' ' + t.title"></b><span class="block truncate text-xs text-ink-mute" x-text="t.mood"></span></span>
+                                                            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold" :class="content[f.key] === t.key ? 'bg-sindoor text-white' : 'ring-1 ring-ink/20 text-transparent'">✓</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <div class="mt-2.5 grid gap-2.5 sm:grid-cols-2">
+                                                    <div class="rounded-2xl bg-white p-2.5 ring-1 transition" :class="content[f.key] === 'custom' ? 'bg-sindoor/[0.06] ring-2 ring-sindoor' : 'ring-ink/10'">
+                                                        <input type="file" class="sr-only" :id="'file_' + f.key" accept="audio/mpeg,audio/mp3,audio/mp4,audio/x-m4a,audio/aac,audio/ogg,audio/wav,.mp3,.m4a,.aac,.ogg,.wav" @change="onMusic(f, $event)">
+                                                        <template x-if="!(media.music || []).length">
+                                                            <button type="button" @click="pick(f)" class="flex w-full items-center gap-3 text-left">
+                                                                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-holud/40 text-xl">🎤</span>
+                                                                <span class="leading-tight"><b class="block">নিজের গান দিন</b><span class="text-xs text-ink-mute" x-text="'MP3 বা M4A, সর্বোচ্চ ' + bn(boot.limits.audio_mb) + ' MB'"></span></span>
+                                                            </button>
+                                                        </template>
+                                                        <template x-for="(m, i) in (media.music || [])" :key="m.key">
+                                                            <div class="flex items-center gap-3">
+                                                                <button type="button" @click="m.id && toggleSample({ key: 'custom', url: m.url })" class="grid h-11 w-11 shrink-0 place-items-center rounded-full text-paper" :class="playing === 'custom' ? 'bg-sindoor' : 'bg-ink'" :disabled="!m.id" aria-label="আপনার গান শুনুন">
+                                                                    <span x-show="m.uploading" class="text-[11px] font-bold" x-text="bn(m.progress) + '%'"></span>
+                                                                    <svg x-show="!m.uploading && playing !== 'custom'" class="ml-0.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                                                                    <span x-show="!m.uploading && playing === 'custom'" class="flex h-4 items-end gap-[3px]"><i class="eq-bar"></i><i class="eq-bar [animation-delay:-.3s]"></i><i class="eq-bar [animation-delay:-.6s]"></i></span>
+                                                                </button>
+                                                                <span class="min-w-0 flex-1 leading-tight"><b class="block truncate" x-text="m.name || 'আপনার গান'"></b>
+                                                                    <span class="block text-xs" :class="m.error ? 'font-semibold text-sindoor-dark' : 'text-ink-mute'" x-text="m.error || (m.uploading ? 'আপলোড হচ্ছে…' : 'আপনার গান যোগ হয়েছে')"></span></span>
+                                                                <button type="button" class="shrink-0 rounded-full px-2 py-1 text-xs font-semibold text-sindoor underline" @click="removeMusic(f)">বাদ দিন</button>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                    <button type="button" @click="content[f.key] = 'none'; stopSample()" class="flex items-center gap-3 rounded-2xl bg-white p-2.5 text-left ring-1 transition" :class="content[f.key] === 'none' ? 'bg-sindoor/[0.06] ring-2 ring-sindoor' : 'ring-ink/10 hover:ring-ink/30'">
+                                                        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-paper-2 text-xl">🔇</span>
+                                                        <span class="leading-tight"><b class="block">গান ছাড়া</b><span class="text-xs text-ink-mute">পেজে কোনো গান বাজবে না</span></span>
+                                                    </button>
+                                                </div>
+                                                <p class="mt-2 text-xs text-ink-mute">নিজের গান দিলে খেয়াল রাখবেন, গানটা ব্যবহারের অধিকার যেন আপনার থাকে।</p>
                                             </div>
                                         </template>
                                         <template x-if="f.type === 'select'">
@@ -292,15 +344,14 @@
         {{-- STEP 5: Preview --}}
         <section x-show="step === 5" x-transition.opacity.duration.300ms>
             <div class="mb-4 flex items-center justify-between gap-3">
-                <div class="inline-flex rounded-full bg-white p-1 ring-1 ring-ink/10">
-                    <button type="button" @click="previewDevice = 'mobile'" :class="previewDevice === 'mobile' ? 'bg-ink text-paper' : 'text-ink-soft'" class="h-10 rounded-full px-4 text-sm font-semibold">মোবাইল</button>
-                    <button type="button" @click="previewDevice = 'desktop'" :class="previewDevice === 'desktop' ? 'bg-ink text-paper' : 'text-ink-soft'" class="h-10 rounded-full px-4 text-sm font-semibold">ডেস্কটপ</button>
-                </div>
-                <button type="button" class="text-sm font-semibold text-sindoor" @click="loadPreview()">↻ রিফ্রেশ</button>
+                <p class="text-sm text-ink-soft">👆 ছুঁয়ে দেখুন, খাম খুলবে, গান বাজবে।</p>
+                <button type="button" class="shrink-0 text-sm font-semibold text-sindoor" @click="loadPreview()">↻ রিফ্রেশ</button>
             </div>
-            <div class="mx-auto overflow-hidden bg-white shadow-[var(--shadow-lift)] ring-1 ring-ink/10 transition-all" :class="previewDevice === 'mobile' ? 'max-w-[390px] rounded-[2rem] border-[8px] border-ink' : 'rounded-2xl'">
-                <div x-show="previewLoading" class="grid h-[70vh] place-items-center text-ink-mute">প্রিভিউ তৈরি হচ্ছে…</div>
-                <iframe x-show="!previewLoading" :srcdoc="previewHtml" title="আপনার পেজের প্রিভিউ" class="block h-[70vh] w-full"></iframe>
+            <div class="phone mx-auto w-full max-w-[390px]" style="height: min(760px, 74dvh)">
+                <div class="phone__screen">
+                    <div x-show="previewLoading" class="grid h-full place-items-center text-ink-mute">প্রিভিউ তৈরি হচ্ছে…</div>
+                    <iframe x-show="!previewLoading" :srcdoc="previewHtml" title="আপনার পেজের প্রিভিউ" allow="autoplay" class="block h-full w-full"></iframe>
+                </div>
             </div>
             <p class="mt-4 text-center text-sm text-ink-soft">চূড়ান্ত পেজে আমরা লেখা আর ছবি আরও যত্ন করে সাজাব। কিছু বদলাতে চাইলে পেছনে যান।</p>
         </section>
@@ -439,7 +490,7 @@
                     <template x-for="f in textFields" :key="f.key">
                         <div x-show="f.type === 'repeater' ? (content[f.key] || []).length : content[f.key]">
                             <dt class="font-semibold text-ink" x-text="f.label"></dt>
-                            <dd class="line-clamp-3 whitespace-pre-line text-ink-soft" x-text="f.type === 'repeater' ? bn((content[f.key] || []).length) + 'টি আইটেম' : content[f.key]"></dd>
+                            <dd class="line-clamp-3 whitespace-pre-line text-ink-soft" x-text="f.type === 'repeater' ? bn((content[f.key] || []).length) + 'টি আইটেম' : (f.type === 'music' ? musicLabel(content[f.key]) : content[f.key])"></dd>
                         </div>
                     </template>
                 </dl>
@@ -483,16 +534,20 @@
         </div>
     </div>
 
-    {{-- Template preview modal --}}
-    <div x-show="previewModal" x-transition.opacity class="fixed inset-0 z-[60] flex flex-col bg-ink/80 p-0 backdrop-blur sm:p-6" @keydown.escape.window="previewModal = null" role="dialog" aria-modal="true">
-        <div class="flex items-center justify-between gap-3 bg-ink px-4 py-3 text-paper sm:rounded-t-2xl">
-            <p class="font-semibold" x-text="previewModal?.name"></p>
-            <div class="flex gap-2">
-                <button type="button" class="btn btn-primary btn-sm" @click="selectTemplate(previewModal.slug); previewModal = null">এটা নেব</button>
-                <button type="button" class="grid h-10 w-10 place-items-center rounded-full bg-paper/10" @click="previewModal = null" aria-label="বন্ধ করুন"><x-icon name="x" class="h-5 w-5" /></button>
+    {{-- Template preview modal: the real page in a phone --}}
+    <div x-show="previewModal" x-transition.opacity class="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-night/85 backdrop-blur sm:p-6" @keydown.escape.window="previewModal = null" @click.self="previewModal = null" role="dialog" aria-modal="true">
+        <div class="flex w-full max-w-[420px] items-center justify-between gap-3 bg-night px-4 py-3 text-paper sm:mb-3 sm:bg-transparent sm:px-1 sm:py-0">
+            <p class="min-w-0 truncate font-semibold" x-text="previewModal?.name"></p>
+            <div class="flex shrink-0 gap-2">
+                <button type="button" class="btn btn-gold btn-sm" @click="selectTemplate(previewModal.slug); previewModal = null">এটা নেব</button>
+                <button type="button" class="grid h-10 w-10 place-items-center rounded-full bg-white/10" @click="previewModal = null" aria-label="বন্ধ করুন"><x-icon name="x" class="h-5 w-5" /></button>
             </div>
         </div>
-        <template x-if="previewModal"><iframe :src="previewModal.render" class="w-full flex-1 bg-white sm:rounded-b-2xl" :title="previewModal.name + ' প্রিভিউ'"></iframe></template>
+        <div class="pv-frame w-full flex-1 sm:w-auto sm:flex-none">
+            <div class="pv-screen h-full bg-white">
+                <template x-if="previewModal"><iframe :src="previewModal.render" allow="autoplay" class="block h-full w-full border-0" :title="previewModal.name + ' প্রিভিউ'"></iframe></template>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

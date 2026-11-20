@@ -2,10 +2,10 @@
 @section('body')
 @php $hero = $d->image('hero_photo'); $date = $d->date('anniversary_date'); @endphp
 @include('page-templates.partials.gate', [
-    'icon' => '💍', 'mode' => 'confetti', 'eyebrow' => 'শুভ বিবাহবার্ষিকী',
+    'style' => 'book', 'icon' => '💍', 'mode' => 'confetti', 'eyebrow' => 'শুভ বিবাহবার্ষিকী', 'ribbon' => '#c8a45d', 'flowerColor' => '#f3ebdd',
     'title' => $d->text('partner_one').' ও '.$d->text('partner_two'),
     'sub' => 'একসাথে পথচলার গল্প',
-    'btn' => 'গল্পটা খুলুন', 'bg' => '#0b1f1b',
+    'btn' => 'ফিতে খুলে গল্পটা পড়ুন', 'bg' => '#16302a',
 ])
 <header class="relative overflow-hidden px-5 pb-20 pt-16 text-center sm:pt-24" data-confetti="#c8a45d,#f3ebdd,#123b34">
     @include('page-templates.partials.particles', ['chars' => ['✦', '·', '✧'], 'count' => 18, 'class' => 't-accent'])
