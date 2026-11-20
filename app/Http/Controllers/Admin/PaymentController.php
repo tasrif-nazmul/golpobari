@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Services\PageService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,20 @@ class PaymentController extends Controller
             $this->payments->verify($payment, $request->input('note'));
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
+        }
+
+        // One tap from "money received" to the page editor.
+        if ($request->boolean('make_page')) {
+            $order = $payment->order()->first()?->load(['package', 'page']);
+            if ($order) {
+                try {
+                    $page = $order->page ?? app(PageService::class)->createFromOrder($order);
+                } catch (RuntimeException $e) {
+                    return redirect()->route('admin.orders.show', $order)->with('error', 'Payment verified, but the page could not be created: '.$e->getMessage());
+                }
+
+                return redirect()->route('admin.pages.edit', $page)->with('success', 'Payment verified and a page draft is ready. Check it, then Publish.');
+            }
         }
 
         return back()->with('success', 'Payment verified. The order is ready for page creation.');

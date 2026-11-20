@@ -31,9 +31,15 @@ class OrderController extends Controller
         $sort = in_array($request->query('sort'), $sortable, true) ? $request->query('sort') : 'created_at';
         $dir = $request->query('dir') === 'asc' ? 'asc' : 'desc';
 
+        $stages = self::stages();
+        $stage = array_key_exists($request->query('stage'), $stages) ? $request->query('stage') : null;
+        $byStatus = Order::select('status', \Illuminate\Support\Facades\DB::raw('count(*) as c'))->groupBy('status')->pluck('c', 'status');
+        $stageCounts = collect($stages)->map(fn ($s) => collect($s[1])->sum(fn ($st) => (int) ($byStatus[$st] ?? 0)));
+
         $orders = Order::query()
-            ->with(['payment', 'page:id,order_id,slug,status', 'template:id,name'])
+            ->with(['payment', 'page:id,order_id,slug,status,visibility,expires_at', 'template:id,name'])
             ->search($request->query('q'))
+            ->when($stage, fn ($q) => $q->whereIn('status', $stages[$stage][1]))
             ->when($request->query('status'), fn ($q, $v) => $q->where('status', $v))
             ->when($request->query('payment'), fn ($q, $v) => $q->where('payment_status', $v))
             ->when($request->query('category'), fn ($q, $v) => $q->where('category_id', (int) $v))
@@ -45,9 +51,25 @@ class OrderController extends Controller
 
         return view('admin.orders.index', [
             'orders' => $orders,
+            'stages' => $stages,
+            'stage' => $stage,
+            'stageCounts' => $stageCounts,
+            'total' => (int) $byStatus->sum(),
             'categories' => Category::orderBy('sort_order')->pluck('name', 'id'),
             'packages' => Package::orderBy('sort_order')->pluck('name', 'id'),
         ]);
+    }
+
+    /** The order list's quick tabs: label + statuses, in the order the work happens. */
+    public static function stages(): array
+    {
+        return [
+            'check' => ['Check payment', [OrderStatus::Submitted->value, OrderStatus::PaymentPending->value]],
+            'make' => ['Make page', [OrderStatus::PaymentVerified->value, OrderStatus::InReview->value]],
+            'making' => ['Being made', [OrderStatus::InProduction->value, OrderStatus::Ready->value]],
+            'live' => ['Live', [OrderStatus::Delivered->value, OrderStatus::Published->value]],
+            'closed' => ['Ended', [OrderStatus::Expired->value, OrderStatus::Cancelled->value, OrderStatus::Refunded->value]],
+        ];
     }
 
     public function show(Order $order)

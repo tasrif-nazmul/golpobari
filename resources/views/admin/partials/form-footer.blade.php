@@ -1,4 +1,4 @@
-<div class="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 rounded-xl bg-stone-100/90 p-1 py-3 backdrop-blur">
-    <a href="{{ $cancel }}" class="a-btn a-btn-ghost">Cancel</a>
-    <button class="a-btn a-btn-primary">{{ $label ?? 'Save' }}</button>
+<div class="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-20 flex items-center justify-end gap-2 rounded-2xl bg-card/95 p-2 shadow-lg ring-1 ring-stone-200 backdrop-blur lg:bottom-3">
+    <a href="{{ $cancel }}" class="a-btn a-btn-ghost flex-1 sm:flex-none">Cancel</a>
+    <button class="a-btn a-btn-primary flex-1 sm:flex-none">{{ $label ?? 'Save' }}</button>
 </div>

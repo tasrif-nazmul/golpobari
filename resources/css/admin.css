@@ -6,36 +6,92 @@
 @source '../js/admin.js';
 @source '../../app/Enums';
 
+/*
+ * GolpoBari admin: the same paper-and-thread palette as the public site,
+ * kept calm so the work (orders, payments, pages) stays in front.
+ * "stone" is re-mapped to warm paper/ink tones so every existing screen picks it up.
+ */
 @theme {
     --font-sans: 'Inter', 'Hind Siliguri', ui-sans-serif, system-ui, sans-serif;
-    --color-brand: #d9482b;
-    --color-brand-dark: #b23519;
+    --font-display: 'Fraunces', 'Tiro Bangla', Georgia, serif;
+
+    --color-stone-50: #fbf7ef;
+    --color-stone-100: #f4ede0;
+    --color-stone-200: #e7dccb;
+    --color-stone-300: #d6c7b0;
+    --color-stone-400: #ad9c86;
+    --color-stone-500: #85735f;
+    --color-stone-600: #665746;
+    --color-stone-700: #4d4134;
+    --color-stone-800: #372e25;
+    --color-stone-900: #2a2019;
+    --color-stone-950: #1e1712;
+
+    --color-paper: #f4ede0;
+    --color-card: #fffdf8;
+    --color-ink: #2a2019;
+    --color-brand: #b5332b;
+    --color-sindoor: #b5332b;
+    --color-brand-dark: #8e231d;
+    --color-leaf: #2f6b4f;
+    --color-leaf-dark: #245540;
+    --color-holud: #e2aa3c;
+    --color-nil: #22406e;
 }
 
 @layer base {
-    body { @apply bg-stone-100 text-stone-900 font-sans antialiased; }
+    body { @apply bg-paper text-ink font-sans antialiased; }
     [x-cloak] { display: none !important; }
-    :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+    :focus-visible { outline: 2px solid var(--color-nil); outline-offset: 2px; }
+    ::selection { background: var(--color-holud); color: var(--color-ink); }
 }
 
 @layer components {
-    .a-card { @apply rounded-xl bg-white ring-1 ring-stone-200; }
-    .a-btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:opacity-50; min-height: 2.5rem; }
+    .a-card { @apply rounded-2xl bg-card ring-1 ring-stone-200; box-shadow: 0 1px 2px rgb(42 32 25 / .04); }
+    .a-btn { @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition select-none disabled:opacity-50; min-height: 2.5rem; }
+    .a-btn:active { transform: translateY(1px); }
     .a-btn-primary { @apply bg-stone-900 text-white hover:bg-black; }
-    .a-btn-brand { @apply bg-brand text-white hover:bg-brand-dark; }
-    .a-btn-success { @apply bg-emerald-600 text-white hover:bg-emerald-700; }
-    .a-btn-danger { @apply bg-rose-600 text-white hover:bg-rose-700; }
-    .a-btn-ghost { @apply bg-white text-stone-700 ring-1 ring-stone-300 hover:bg-stone-50; }
-    .a-btn-sm { @apply px-2.5 py-1 text-xs; min-height: 2rem; }
-    .a-input { @apply block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-stone-900 ring-1 ring-stone-300 placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:outline-none; min-height: 2.5rem; }
+    .a-btn-brand { @apply bg-brand text-white hover:bg-brand-dark; box-shadow: inset 0 -2px 0 rgb(0 0 0 / .18); }
+    .a-btn-success { @apply bg-leaf text-white hover:bg-leaf-dark; box-shadow: inset 0 -2px 0 rgb(0 0 0 / .18); }
+    .a-btn-danger { @apply bg-rose-700 text-white hover:bg-rose-800; }
+    .a-btn-ghost { @apply bg-card text-stone-700 ring-1 ring-stone-300 hover:bg-stone-50 hover:ring-stone-400; }
+    .a-btn-sm { @apply rounded-lg px-2.5 py-1 text-xs; min-height: 2rem; }
+    .a-btn-lg { @apply px-5 text-base; min-height: 3rem; }
+    .a-input { @apply block w-full rounded-xl border-0 bg-white px-3 py-2 text-sm text-stone-900 ring-1 ring-stone-300 placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:outline-none; min-height: 2.5rem; }
     textarea.a-input { @apply leading-relaxed; }
     .a-label { @apply mb-1 block text-sm font-medium text-stone-700; }
     .a-help { @apply mt-1 text-xs text-stone-500; }
-    .a-error { @apply mt-1 text-xs font-medium text-rose-600; }
+    .a-error { @apply mt-1 text-xs font-medium text-rose-700; }
     .a-table { @apply w-full text-left text-sm; }
     .a-table th { @apply whitespace-nowrap border-b border-stone-200 bg-stone-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-stone-500; }
     .a-table td { @apply border-b border-stone-100 px-4 py-3 align-top; }
-    .a-table tr:hover td { @apply bg-stone-50/60; }
+    .a-table tr:last-child td { border-bottom: 0; }
+    .a-table tr:hover td { @apply bg-stone-50/70; }
     .a-dl dt { @apply text-xs font-medium uppercase tracking-wide text-stone-500; }
     .a-dl dd { @apply mt-0.5 text-sm text-stone-900; }
+
+    /* Page titles get the site's serif voice. */
+    .a-title { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; font-variation-settings: 'SOFT' 50; }
+
+    /* Running stitch, the one decorative idea we borrow from the site. */
+    .a-stitch { border-style: dashed; border-color: var(--color-stone-300); }
+    .a-stitch-t { border-top: 1.5px dashed var(--color-stone-300); }
+    .a-stitch-b { border-bottom: 1.5px dashed var(--color-stone-300); }
+
+    /* Filter / tab chips */
+    .a-chip { @apply inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 ring-1 ring-stone-300 transition hover:bg-card hover:text-stone-900; }
+    .a-chip[aria-current='true'] { @apply bg-stone-900 text-white ring-stone-900; }
+    .a-chip .n { @apply rounded-full bg-stone-200 px-1.5 text-[11px] font-bold tabular-nums text-stone-700; }
+    .a-chip[aria-current='true'] .n { @apply bg-white/20 text-white; }
+    .a-chip .n.hot { @apply bg-brand text-white; }
+
+    /* Work queue rows on the dashboard */
+    .a-row { @apply flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5; }
+    .a-row + .a-row { border-top: 1.5px dashed var(--color-stone-200); }
+
+    /* Horizontal scroll strip without a visible scrollbar (chips on phones). */
+    .a-scroll { @apply -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0; scrollbar-width: none; }
+    .a-scroll::-webkit-scrollbar { display: none; }
 }
+
+@utility pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }

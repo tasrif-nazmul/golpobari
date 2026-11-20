@@ -34,7 +34,7 @@ class PageController extends Controller
         $tab = $request->query('tab', 'all');
         $days = (int) config('golpobari.expiring_soon_days', 7);
 
-        $pages = Page::query()->with(['template:id,name,category_id', 'template.category:id,name', 'order:id,order_number,customer_name'])
+        $pages = Page::query()->with(['template:id,name,category_id', 'template.category:id,name', 'order:id,order_number,customer_name,customer_phone'])
             ->when($request->query('q'), fn ($q, $v) => $q->where(fn ($w) => $w->where('slug', 'like', "%{$v}%")->orWhere('title', 'like', "%{$v}%")
                 ->orWhereHas('order', fn ($o) => $o->where('order_number', 'like', "%{$v}%")->orWhere('customer_name', 'like', "%{$v}%"))))
             ->when(in_array($tab, array_column(PageStatus::cases(), 'value'), true), fn ($q) => $q->where('status', $tab))
