@@ -8,9 +8,10 @@
     $candles = max(1, min(7, (int) ($age ? strlen(preg_replace('/\D/', '', strtr($age, ['০'=>'0','১'=>'1','২'=>'2','৩'=>'3','৪'=>'4','৫'=>'5','৬'=>'6','৭'=>'7','৮'=>'8','৯'=>'9']))) + 2 : 3)));
 @endphp
 @include('page-templates.partials.gate', [
-    'icon' => '🎁', 'mode' => 'confetti', 'eyebrow' => 'সারপ্রাইজ!',
-    'title' => $d->text('birthday_name').', তোমার জন্য একটা উপহার',
-    'btn' => 'উপহার খোলো',
+    'style' => 'gift', 'mode' => 'confetti', 'eyebrow' => 'শুভ জন্মদিন',
+    'title' => $d->text('birthday_name').', তোমার জন্য',
+    'sub' => $d->text('from_name') ? 'ইতি, '.$d->text('from_name') : 'ভালোবাসাসহ',
+    'btn' => 'ফিতে টেনে উপহার খোলো', 'paper' => '#e2577a', 'ribbon' => '#f3c44a', 'bg' => '#2b2d6e',
 ])
 
 <header class="relative overflow-hidden px-5 pb-16 pt-14 text-center sm:pt-20" data-confetti="#ffb703,#e9839f,#2b2d8f,#90be6d,#ffffff">

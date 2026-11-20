@@ -13,7 +13,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-D53KJrGP.css",
+    "file": "assets/app-BVP-6WBC.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/css/page.css": {
-    "file": "assets/page-DOhAVW6K.css",
+    "file": "assets/page-D-1PJ-nA.css",
     "src": "resources/css/page.css",
     "isEntry": true,
     "name": "page",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/js/page.js": {
-    "file": "assets/page-sh8wPrmq.js",
+    "file": "assets/page-CzFo9ViO.js",
     "name": "page",
     "src": "resources/js/page.js",
     "isEntry": true

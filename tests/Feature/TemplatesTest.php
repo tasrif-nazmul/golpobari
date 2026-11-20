@@ -65,10 +65,12 @@ class TemplatesTest extends TestCase
         $t->update(['name' => 'Edited by admin']);
         Template::where('slug', 'eid-mubarak')->first()->fields()->delete();
         Template::where('slug', 'eid-mubarak')->delete();
+        Template::where('slug', 'love-letter')->update(['name' => 'Love Letter']); // an old English default
 
         $this->artisan('golpobari:sync-templates')->assertSuccessful();
 
         $this->assertSame('Edited by admin', $t->fresh()->name);
+        $this->assertSame('খামবন্দী কথা', Template::where('slug', 'love-letter')->value('name'));
         $eid = Template::where('slug', 'eid-mubarak')->firstOrFail();
         $this->assertSame('festival-greeting', $eid->layout);
         $this->assertGreaterThan(0, $eid->fields()->count());

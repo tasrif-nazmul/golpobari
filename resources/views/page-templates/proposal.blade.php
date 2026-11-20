@@ -2,9 +2,10 @@
 @section('body')
 @php $hero = $d->image('hero_photo'); $lines = $d->items('lines'); $wa = $d->whatsapp($d->text('whatsapp')); @endphp
 @include('page-templates.partials.gate', [
-    'icon' => '💍', 'eyebrow' => 'শুধু তোমার জন্য',
+    'style' => 'envelope', 'mode' => 'hearts', 'eyebrow' => 'শুধু তোমার জন্য', 'initial' => '♥',
+    'paper' => '#f6dfe3', 'ribbon' => '#b8324f', 'seal' => '#8e1537', 'bg' => '#3a1630',
     'title' => $d->text('their_name').', তোমার জন্য একটা প্রশ্ন আছে',
-    'sub' => 'একটু সময় নিয়ে পড়ো…', 'btn' => 'শুরু করো',
+    'sub' => 'একটু সময় নিয়ে পড়ো…', 'btn' => 'সিলমোহর ছুঁয়ে খোলো',
 ])
 <main class="relative min-h-dvh overflow-hidden px-5 pb-24 pt-16 text-center">
     <div class="pointer-events-none fixed inset-0" aria-hidden="true">

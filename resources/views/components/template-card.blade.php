@@ -8,7 +8,7 @@
 @endphp
 <article x-data {{ $attributes->merge(['class' => 'tcard group']) }} style="--tint: color-mix(in oklab, {{ $tint }} 22%, #fbf3e6)">
     <div class="tcard__stage">
-        <span class="absolute left-4 top-4 z-10 rounded-full bg-white/85 px-3 py-1 text-xs font-bold text-ink shadow-sm backdrop-blur">{{ $payload['category'] }}</span>
+        <span class="absolute left-4 top-4 z-10 rounded-md bg-sindoor px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">{{ $payload['category'] }}</span>
         @if ($payload['music'])
             <span class="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-night/85 px-2.5 py-1 text-[11px] font-semibold text-paper backdrop-blur" title="এই টেমপ্লেটে গান আছে">
                 <span class="flex h-3 items-end gap-[2px] text-holud"><i class="eq-bar"></i><i class="eq-bar [animation-delay:-.3s]"></i><i class="eq-bar [animation-delay:-.6s]"></i></span> গান
@@ -28,7 +28,7 @@
         </span>
     </div>
     <div class="flex flex-1 flex-col px-5 pb-5 pt-4">
-        <h3 class="font-display text-[1.35rem] font-bold leading-snug">{{ $template->name }}</h3>
+        <h3 class="font-display text-[1.5rem] leading-snug">{{ $template->name }}</h3>
         @unless ($compact)
             <p class="mt-1 line-clamp-2 text-[0.95rem] leading-relaxed text-ink-soft">{{ $template->tagline ?: $template->description }}</p>
         @endunless
@@ -37,7 +37,7 @@
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg> প্রিভিউ
             </button>
             <a href="{{ route('templates.show', $template) }}" class="btn btn-ghost btn-sm">বিস্তারিত</a>
-            <a href="{{ $payload['order'] }}" class="btn btn-ink btn-sm col-span-2">এটা দিয়ে বানাই <x-icon name="arrow-right" class="h-4 w-4" /></a>
+            <a href="{{ $payload['order'] }}" class="btn btn-primary btn-sm col-span-2">এটা দিয়ে বানাই <x-icon name="arrow-right" class="h-4 w-4" /></a>
         </div>
     </div>
 </article>

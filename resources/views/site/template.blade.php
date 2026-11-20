@@ -26,9 +26,9 @@
 
                 <div class="mt-6 flex flex-wrap gap-2">
                     @if ($payload['music'])<span class="chip !bg-night !text-paper"><span class="flex h-3 items-end gap-[2px] text-holud"><i class="eq-bar"></i><i class="eq-bar [animation-delay:-.3s]"></i><i class="eq-bar [animation-delay:-.6s]"></i></span> গান: {{ $payload['music'] }}</span>@endif
-                    <span class="chip">✨ অ্যানিমেশন</span>
-                    <span class="chip">📱 মোবাইলে সুন্দর</span>
-                    <span class="chip">🔗 নিজের লিংক</span>
+                    <span class="chip">অ্যানিমেশন</span>
+                    <span class="chip">মোবাইলে সুন্দর</span>
+                    <span class="chip">নিজের লিংক</span>
                 </div>
 
                 <div x-data class="mt-8 flex flex-col gap-3 sm:flex-row">

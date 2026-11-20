@@ -85,12 +85,12 @@ class Template extends Model
 
         return [
             'name' => $this->name,
-            'category' => trim(($this->category?->emoji ?? '').' '.($this->category?->displayName() ?? '')),
+            'category' => (string) $this->category?->displayName(),
             'description' => $this->description,
             'render' => route('templates.render', $this),
             'show' => route('templates.show', $this),
             'order' => route('order.create', ['template' => $this->slug]),
-            'music' => $music ? $music['icon'].' '.$music['title'] : null,
+            'music' => $music ? $music['title'] : null,
         ];
     }
 

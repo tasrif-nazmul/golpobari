@@ -8,12 +8,14 @@ use App\Enums\PaymentStatus;
 use App\Models\Admin;
 use App\Models\Coupon;
 use App\Models\Order;
+use App\Models\Package;
 use App\Models\Page;
 use App\Models\PageMedia;
 use App\Support\Settings;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -82,7 +84,7 @@ class OrderToPublishedPageTest extends TestCase
     public function test_visitor_browses_home_category_and_template(): void // tests 1–3
     {
         $this->get('/')->assertOk()->assertSee('আপনার গল্পের নিজের একটা ঠিকানা।', false)->assertSee('/categories/someone-special', false);
-        $this->get('/categories/someone-special')->assertOk()->assertSee('Romantic Story');
+        $this->get('/categories/someone-special')->assertOk()->assertSee('আমাদের গল্প');
         $this->get('/templates/romantic-story')->assertOk()->assertSee(route('order.create', ['template' => 'romantic-story']), false);
         $this->get('/templates/romantic-story/render')->assertOk()->assertHeader('X-Robots-Tag', 'noindex');
         $this->get(route('order.create', ['template' => 'romantic-story']))->assertOk();
@@ -158,9 +160,9 @@ class OrderToPublishedPageTest extends TestCase
 
     public function test_order_validation_blocks_bad_input(): void
     {
-        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $this->withoutMiddleware(ThrottleRequests::class);
         $hero = $this->upload('hero_photo')->json('id');
-        $post = fn (array $o, array $media = null) => $this->withCredentials()->withCookie('gb_draft', $this->draft)->postJson(route('order.store'), $this->payload($media ?? ['hero_photo' => [$hero]], $o));
+        $post = fn (array $o, ?array $media = null) => $this->withCredentials()->withCookie('gb_draft', $this->draft)->postJson(route('order.store'), $this->payload($media ?? ['hero_photo' => [$hero]], $o));
 
         $post(['desired_slug' => 'admin'])->assertStatus(422)->assertJsonValidationErrors('desired_slug');
         $post(['desired_slug' => 'order'])->assertStatus(422)->assertJsonValidationErrors('desired_slug');
@@ -255,7 +257,7 @@ class OrderToPublishedPageTest extends TestCase
         $this->get(route('media.show', [$page->media->first(), 'full']))->assertNotFound();
 
         $this->actingAs($admin, 'admin');
-        $package = \App\Models\Package::where('slug', '6-months')->first();
+        $package = Package::where('slug', '6-months')->first();
         $this->post(route('admin.pages.renew', $page), ['mode' => 'package', 'package_id' => $package->id])->assertSessionHas('success');
         $page->refresh();
         $this->assertSame(PageStatus::Active, $page->status);
