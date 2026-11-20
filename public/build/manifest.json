@@ -1,0 +1,57 @@
+{
+  "_module.esm-BK6u66ms.js": {
+    "file": "assets/module.esm-BK6u66ms.js",
+    "name": "module.esm"
+  },
+  "resources/css/admin.css": {
+    "file": "assets/admin-eifs59yI.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true,
+    "name": "admin",
+    "names": [
+      "admin.css"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Dxz2Pcu_.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/page.css": {
+    "file": "assets/page-BUrlyuCg.css",
+    "src": "resources/css/page.css",
+    "isEntry": true,
+    "name": "page",
+    "names": [
+      "page.css"
+    ]
+  },
+  "resources/js/admin.js": {
+    "file": "assets/admin-aZdKzRUT.js",
+    "name": "admin",
+    "src": "resources/js/admin.js",
+    "isEntry": true,
+    "imports": [
+      "_module.esm-BK6u66ms.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CgBnPRLx.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_module.esm-BK6u66ms.js"
+    ]
+  },
+  "resources/js/page.js": {
+    "file": "assets/page-8msdaOqN.js",
+    "name": "page",
+    "src": "resources/js/page.js",
+    "isEntry": true
+  }
+}
