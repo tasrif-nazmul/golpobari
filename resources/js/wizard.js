@@ -16,8 +16,8 @@ const normPhone = (p) => {
 export const STEPS = [
     { group: 1, title: 'কার জন্য বানাবেন?', sub: 'একটা ক্যাটাগরি বেছে নিন' },
     { group: 2, title: 'টেমপ্লেট বাছুন', sub: 'প্রিভিউ দেখে পছন্দেরটা বেছে নিন' },
-    { group: 3, title: 'গল্পটা বলুন', sub: 'পেজে যা যা থাকবে' },
-    { group: 3, title: 'ছবিগুলো দিন', sub: 'মোবাইল গ্যালারি থেকেই দেওয়া যাবে' },
+    { group: 3, title: 'গল্পটা বলুন', sub: 'অংশ ধরে ধরে লিখুন আর ছবি দিন। প্রিভিউতে দেখবেন কোনটা কোথায় বসছে।' },
+    { group: 3, title: 'লিংক ও যোগাযোগ', sub: 'পেজের ঠিকানা আর আপনার নম্বর' },
     { group: 3, title: 'একবার দেখে নিন', sub: 'আপনার তথ্য দিয়ে তৈরি প্রিভিউ' },
     { group: 4, title: 'কতদিনের জন্য?', sub: 'প্যাকেজ বেছে নিন' },
     { group: 4, title: 'কুপন আছে?', sub: 'না থাকলে এগিয়ে যান' },
@@ -42,6 +42,7 @@ export function orderWizard(boot) {
         confirm: false, agree: false,
         errors: {}, stepError: '', submitting: false,
         previewHtml: '', previewLoading: false, previewDevice: 'mobile', previewModal: null,
+        activeField: null, previewOpen: false, liveLoading: false, liveDirty: true, _liveT: null,
 
         init() {
             this.restore();
@@ -58,8 +59,14 @@ export function orderWizard(boot) {
                 this.stepError = '';
                 window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
                 if (s === 5) this.loadPreview();
+                if (s === 3) { this.liveDirty = true; this.$nextTick(() => this.isDesktop() && this.refreshLive()); }
+                if (s !== 3) this.previewOpen = false;
                 if (s === 9 && !this.payment.amount) this.payment.amount = String(this.totals.final);
             });
+            this.$watch('content', () => this.scheduleLive());
+            this.$watch('media', () => this.scheduleLive());
+            this.$watch('previewOpen', (o) => { document.documentElement.style.overflow = o ? 'hidden' : ''; });
+            if (this.step === 3) this.$nextTick(() => this.isDesktop() && this.refreshLive());
             window.addEventListener('beforeunload', (e) => { if (this.uploading) { e.preventDefault(); e.returnValue = ''; } });
         },
 
@@ -69,6 +76,24 @@ export function orderWizard(boot) {
         findTemplate(slug) { for (const c of this.boot.catalog) { const t = c.templates.find((x) => x.slug === slug); if (t) return t; } return null; },
         get textFields() { return (this.template?.fields || []).filter((f) => !['image', 'gallery'].includes(f.type)); },
         get mediaFields() { return (this.template?.fields || []).filter((f) => ['image', 'gallery'].includes(f.type)); },
+        /* The template's page map: sections from top to bottom, each with its fields. */
+        get sections() {
+            const t = this.template; if (!t) return [];
+            const secs = t.guide?.sections?.length ? t.guide.sections : [{ n: 1, total: 1, icon: '📝', title: 'আপনার পেজের তথ্য', where: 'পুরো পেজ জুড়ে', fields: t.fields.map((f) => f.key) }];
+            return secs;
+        },
+        fieldBy(key) { return (this.template?.fields || []).find((f) => f.key === key) || null; },
+        isMedia(f) { return ['image', 'gallery'].includes(f.type); },
+        exampleText(f) {
+            if (!f) return '';
+            const e = this.template?.guide?.examples?.[f.key];
+            if (!e) return f.placeholder || '';
+            if (e.text) return e.text;
+            if (e.row) return Object.values(e.row).filter((v) => v && String(v).trim()).join(' · ') + (e.count > 1 ? `  (এরকম ${bn(e.count)}টা)` : '');
+            return '';
+        },
+        exampleImage(f) { return this.template?.guide?.examples?.[f.key]?.image || null; },
+        rowExample(f, sub) { const r = this.template?.guide?.examples?.[f.key]?.row; return r && r[sub] ? 'যেমন: ' + r[sub] : ''; },
         get package() { return this.boot.packages.find((p) => p.slug === this.packageSlug) || null; },
         get photoCount() { return Object.values(this.media).flat().filter((m) => m.id).length; },
         get uploading() { return Object.values(this.media).flat().some((m) => m.uploading); },
@@ -119,7 +144,7 @@ export function orderWizard(boot) {
         /* ---------------- navigation & validation ---------------- */
         next() {
             const err = this.validateStep(this.step);
-            if (err) { this.stepError = err; this.$nextTick(() => document.querySelector('[aria-invalid="true"], .js-step-error')?.scrollIntoView({ block: 'center', behavior: 'smooth' })); return; }
+            if (err) { this.stepError = err; this.$nextTick(() => (Array.from(document.querySelectorAll('[aria-invalid="true"], .field-error')).find((e) => e.offsetParent && (e.getAttribute('aria-invalid') === 'true' || e.textContent.trim())) || document.querySelector('.js-step-error'))?.scrollIntoView({ block: 'center', behavior: 'smooth' })); return; }
             if (this.step < this.steps.length) this.step++;
         },
         back() { if (this.step > 1) this.step--; },
@@ -139,17 +164,19 @@ export function orderWizard(boot) {
                     else if (!empty && f.type === 'url' && !/^https?:\/\/\S+$/i.test(v)) this.errors['content.' + f.key] = 'লিংক https:// দিয়ে শুরু করুন।';
                     else if (!empty && f.max_length && String(v).length > f.max_length) this.errors['content.' + f.key] = `সর্বোচ্চ ${bn(f.max_length)} অক্ষর।`;
                 });
+                this.mediaFields.forEach((f) => {
+                    if (f.required && !(this.media[f.key] || []).some((m) => m.id)) this.errors['media.' + f.key] = `"${f.label}" এর জন্য অন্তত একটি ছবি দিন।`;
+                });
+                if (Object.keys(this.errors).length) return 'কিছু তথ্য বাকি বা ভুল আছে। লাল লেখা ঘরগুলো দেখুন।';
+                if (this.uploading) return 'ছবি আপলোড শেষ হওয়া পর্যন্ত একটু অপেক্ষা করুন।';
+                if (this.photoCount > this.photoLimit) return `সর্বোচ্চ ${bn(this.photoLimit)}টি ছবি দেওয়া যাবে।`;
+            }
+            if (n === 4) {
                 if (this.customer.name.trim().length < 2) this.errors.customer_name = 'আপনার নাম দিন।';
                 if (!BD_MOBILE.test(normPhone(this.customer.phone))) this.errors.customer_phone = 'সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)।';
                 if (this.customer.email && !/^\S+@\S+\.\S+$/.test(this.customer.email)) this.errors.customer_email = 'সঠিক ইমেইল দিন।';
                 if (this.slug && this.slugState.ok === false) this.errors.desired_slug = this.slugState.message;
                 if (Object.keys(this.errors).length) return 'কিছু তথ্য বাকি বা ভুল আছে। লাল চিহ্নিত ঘরগুলো দেখুন।';
-            }
-            if (n === 4) {
-                if (this.uploading) return 'ছবি আপলোড শেষ হওয়া পর্যন্ত একটু অপেক্ষা করুন।';
-                const missing = this.mediaFields.find((f) => f.required && !(this.media[f.key] || []).some((m) => m.id));
-                if (missing) return `"${missing.label}" এর জন্য অন্তত একটি ছবি দিন।`;
-                if (this.photoCount > this.photoLimit) return `সর্বোচ্চ ${bn(this.photoLimit)}টি ছবি দেওয়া যাবে।`;
             }
             if (n === 6) {
                 if (!this.package) return 'একটা প্যাকেজ বেছে নিন।';
@@ -263,6 +290,78 @@ export function orderWizard(boot) {
             this.previewLoading = false;
         },
 
+        /* ---------------- live preview (step 3) ---------------- */
+        isDesktop() { return window.matchMedia('(min-width: 1024px)').matches; },
+        scheduleLive() {
+            if (this.step !== 3) return;
+            this.liveDirty = true;
+            clearTimeout(this._liveT);
+            if (!this.isDesktop() && !this.previewOpen) return; // phones fetch when the sheet opens
+            this._liveT = setTimeout(() => this.refreshLive(), 1100);
+        },
+        openPreview() {
+            this.previewOpen = true;
+            if (this.liveDirty || !this.$refs.live?.srcdoc) this.refreshLive();
+            else this.$nextTick(() => this.highlight(this.activeField));
+        },
+        async refreshLive() {
+            const frame = this.$refs.live; if (!this.template || !frame) return;
+            this.liveDirty = false; this.liveLoading = true;
+            let y = 0; try { y = frame.contentWindow?.scrollY || 0; } catch (e) {}
+            try {
+                const r = await this.post(this.boot.urls.preview, { template: this.templateSlug, content: this.content, media: this.mediaPayload(), captions: this.captionsPayload(), fill: true }, 'text/html');
+                if (!r.ok) { this.liveLoading = false; return; }
+                const html = await r.text();
+                frame.onload = () => {
+                    this.liveLoading = false;
+                    try { frame.contentWindow.scrollTo(0, y); } catch (e) {}
+                    if (this.activeField) this.highlight(this.activeField, !!this._wantScroll);
+                    this._wantScroll = false;
+                };
+                frame.srcdoc = html;
+            } catch (e) { this.liveLoading = false; }
+        },
+        focusField(key) {
+            if (this.activeField === key) return;
+            this.activeField = key;
+            if (this.isDesktop()) this.highlight(key);
+        },
+        showOnPage(key) {
+            this.activeField = key;
+            if (this.isDesktop()) { if (this.liveDirty) { this._wantScroll = true; this.refreshLive(); } else this.highlight(key); return; }
+            this._wantScroll = true;
+            this.openPreview();
+        },
+        /* Outline the element showing this field inside the preview and scroll it into view. */
+        highlight(key, scroll = true) {
+            const doc = this.$refs.live?.contentDocument; if (!key || !doc || !doc.body) return;
+            doc.querySelectorAll('.gb-hl').forEach((e) => e.classList.remove('gb-hl'));
+            const el = doc.querySelector(`[data-f~="${(window.CSS && CSS.escape) ? CSS.escape(key) : key}"]`) || this.findByText(doc, key);
+            let tag = doc.getElementById('gb-tag');
+            if (!el) { if (tag) tag.style.display = 'none'; return; }
+            el.classList.add('gb-hl');
+            if (!tag) {
+                tag = doc.createElement('div'); tag.id = 'gb-tag';
+                tag.style.cssText = 'position:absolute;z-index:99;pointer-events:none;background:#e2553f;color:#fff;font:700 12px/1 "Hind Siliguri",sans-serif;padding:6px 10px;border-radius:999px;box-shadow:0 6px 16px -6px rgba(0,0,0,.5);white-space:nowrap';
+                doc.body.appendChild(tag);
+            }
+            const r = el.getBoundingClientRect(), win = doc.defaultView;
+            tag.textContent = '👇 ' + (this.fieldBy(key)?.label || '') + ' এখানে বসবে';
+            tag.style.display = 'block';
+            tag.style.top = Math.max(0, r.top + win.scrollY - 30) + 'px';
+            tag.style.left = Math.max(6, Math.min(r.left + win.scrollX, win.innerWidth - tag.offsetWidth - 6)) + 'px';
+            if (scroll) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        },
+        findByText(doc, key) {
+            const v = this.content[key];
+            let s = typeof v === 'string' && v.trim() ? v.trim() : this.exampleText(this.fieldBy(key));
+            s = (s || '').split('\n')[0].slice(0, 22).trim();
+            if (s.length < 3) return null;
+            const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+            let n; while ((n = w.nextNode())) if (n.textContent.includes(s)) return n.parentElement;
+            return null;
+        },
+
         /* ---------------- coupon ---------------- */
         async applyCoupon() {
             const code = this.coupon.code.trim().toUpperCase();
@@ -331,8 +430,9 @@ export function orderWizard(boot) {
         stepForErrors(keys) {
             const has = (p) => keys.some((k) => k === p || k.startsWith(p));
             if (has('template')) return 2;
-            if (has('content') || has('customer_') || has('desired_slug') || has('occasion')) return 3;
-            if (has('media')) return 4;
+            if (has('content') || has('media')) return 3;
+            if (has('customer_') || has('desired_slug')) return 4;
+            if (has('occasion')) return 2;
             if (has('package')) return 6;
             if (has('coupon_code')) return 7;
             if (has('payment_')) return 9;

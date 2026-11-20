@@ -17,6 +17,7 @@ use App\Support\ContentSchema;
 use App\Support\Phone;
 use App\Support\Settings;
 use App\Support\SlugRules;
+use App\Support\TemplateRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -50,6 +51,7 @@ class OrderController extends Controller
                 'render' => route('templates.render', $t),
                 'max_photos' => $t->max_photos,
                 'fields' => $t->fields->map->toSchema()->values(),
+                'guide' => TemplateRegistry::guide($t->layout, $t->fields->map->toSchema()->all(), $t->sampleContent()),
             ])->values(),
         ])->values();
 
@@ -187,7 +189,7 @@ class OrderController extends Controller
                 }
             }) : collect();
 
-        return response($renderer->forDraft($template, $content, $media)->render())->header('X-Robots-Tag', 'noindex');
+        return response($renderer->forDraft($template, $content, $media, $request->boolean('fill'))->render())->header('X-Robots-Tag', 'noindex');
     }
 
     public function store(StoreOrderRequest $request, OrderService $orders): JsonResponse

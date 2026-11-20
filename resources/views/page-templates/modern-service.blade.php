@@ -13,7 +13,7 @@
             <h1 class="font-heading t-reveal text-[2.75rem] font-bold leading-[1.05] tracking-tight sm:text-7xl">
                 <span style="background: linear-gradient(90deg, var(--t-primary), var(--t-accent)); -webkit-background-clip: text; background-clip: text; color: transparent">{{ $d->text('headline') }}</span>
             </h1>
-            @if ($d->has('intro'))<p class="t-reveal mt-6 max-w-xl text-lg opacity-75">{{ $d->text('intro') }}</p>@endif
+            @if ($d->has('intro'))<p class="t-reveal mt-6 max-w-xl text-lg opacity-75" {{ $d->f('intro') }}>{{ $d->text('intro') }}</p>@endif
             <div class="t-reveal mt-8 flex flex-wrap gap-3">
                 <a href="{{ $wa ?: ($d->has('email') ? 'mailto:'.$d->text('email') : '#services') }}" @if ($wa) target="_blank" rel="noopener" @endif class="t-btn text-white" style="background: linear-gradient(90deg, var(--t-primary), var(--t-accent))">{{ $cta }} →</a>
                 <a href="#services" class="t-btn t-btn--ghost">Services</a>
@@ -22,7 +22,7 @@
         @if ($photo)
             <div class="t-reveal relative mx-auto w-64 sm:w-80">
                 <div class="absolute -inset-1.5 rounded-[2rem] opacity-80 blur-md" style="background: linear-gradient(135deg, var(--t-primary), var(--t-accent))"></div>
-                <img src="{{ $photo['url'] }}" alt="{{ $d->text('brand_name') }}" class="relative aspect-[4/5] w-full rounded-[2rem] object-cover" width="320" height="400">
+                <img src="{{ $photo['url'] }}" {{ $d->f('photo') }} alt="{{ $d->text('brand_name') }}" class="relative aspect-[4/5] w-full rounded-[2rem] object-cover" width="320" height="400">
             </div>
         @endif
     </section>
@@ -43,7 +43,7 @@
         </section>
 
         @if ($d->has('process'))
-            <section class="mt-24">
+            <section class="mt-24" {{ $d->f('process') }}>
                 <p class="text-sm font-semibold uppercase tracking-[0.25em] t-accent">Process</p>
                 <ol class="mt-6 grid gap-6 {{ ['md:grid-cols-1', 'md:grid-cols-2', 'md:grid-cols-3', 'md:grid-cols-4'][min(count($d->items('process')), 4) - 1] }}">
                     @foreach ($d->items('process') as $i => $p)
@@ -58,7 +58,7 @@
         @endif
 
         @if ($d->has('testimonials'))
-            <section class="mt-24 grid gap-5 md:grid-cols-2">
+            <section class="mt-24 grid gap-5 md:grid-cols-2" {{ $d->f('testimonials') }}>
                 @foreach ($d->items('testimonials') as $t)
                     <figure class="t-reveal rounded-3xl bg-white/[0.04] p-7 ring-1 ring-white/10">
                         <blockquote class="text-xl leading-relaxed">“{{ $t['text'] ?? '' }}”</blockquote>

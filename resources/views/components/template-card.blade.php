@@ -2,7 +2,7 @@
 @php
     $theme = $template->resolvedTheme();
     $preview = $template->previewUrl();
-    $fakeSlug = ['romantic-story' => 'rafi-mitu', 'birthday-celebration' => 'happy-birthday-mitu', 'love-letter' => 'for-nusrat', 'our-journey' => 'anika-shuvo', 'clean-business' => 'rafis-cafe', 'modern-service' => 'sakib', 'photo-memories' => 'sajek-2025', 'memory-timeline' => 'our-story', 'minimal-portfolio' => 'nodi', 'modern-professional' => 'tanvir', 'creative-portfolio' => 'ritu', 'event-invitation' => 'anika-weds-shuvo'][$template->layout] ?? $template->slug;
+    $fakeSlug = ['romantic-story' => 'rafi-mitu', 'birthday-celebration' => 'happy-birthday-mitu', 'love-letter' => 'for-nusrat', 'our-journey' => 'anika-shuvo', 'clean-business' => 'rafis-cafe', 'modern-service' => 'sakib', 'photo-memories' => 'sajek-2025', 'memory-timeline' => 'our-story', 'minimal-portfolio' => 'nodi', 'modern-professional' => 'tanvir', 'creative-portfolio' => 'ritu', 'event-invitation' => 'anika-weds-shuvo', 'proposal' => 'nila-will-you', 'gift-surprise' => 'surprise-tithi', 'reasons-cards' => 'reasons-for-ammu', 'travel-diary' => 'bandarban-2025', 'tribute' => 'in-memory-of-abbu', 'festival-greeting' => 'eid-mubarak-sakib'][$template->layout] ?? $template->slug;
 @endphp
 <article {{ $attributes->merge(['class' => 'group card flex flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]']) }}>
     <a href="{{ route('templates.show', $template) }}" class="block" aria-label="{{ $template->name }} টেমপ্লেট দেখুন">

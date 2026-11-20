@@ -159,6 +159,7 @@ php artisan down --retry=30
 git pull
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
+php artisan golpobari:sync-templates   # adds new templates/categories; never changes ones you edited
 php artisan optimize:clear && php artisan optimize
 php artisan up
 ```

@@ -4,11 +4,11 @@
 <div class="lg:grid lg:min-h-dvh lg:grid-cols-[22rem_1fr]">
     <aside class="bg-primary px-6 pb-10 pt-12 text-white lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:px-9 lg:pt-16">
         @if ($photo)
-            <img src="{{ $photo['url'] }}" alt="{{ $d->text('full_name') }}" class="h-32 w-32 rounded-2xl object-cover ring-4 ring-[var(--t-accent)] lg:h-40 lg:w-40" width="160" height="160">
+            <img src="{{ $photo['url'] }}" {{ $d->f('profile_photo') }} alt="{{ $d->text('full_name') }}" class="h-32 w-32 rounded-2xl object-cover ring-4 ring-[var(--t-accent)] lg:h-40 lg:w-40" width="160" height="160">
         @endif
-        <h1 class="font-heading mt-6 text-4xl font-extrabold leading-tight">{{ $d->text('full_name') }}</h1>
+        <h1 class="font-heading mt-6 text-4xl font-extrabold leading-tight" data-split {{ $d->f('full_name') }}>{{ $d->text('full_name') }}</h1>
         <p class="mt-2 text-lg font-semibold t-accent">{{ $d->text('job_title') }}</p>
-        @if ($d->has('location'))<p class="mt-1 text-white/60">{{ $d->text('location') }}</p>@endif
+        @if ($d->has('location'))<p class="mt-1 text-white/60" {{ $d->f('location') }}>{{ $d->text('location') }}</p>@endif
 
         <div class="mt-8 space-y-3 text-[0.95rem]">
             @if ($d->has('email'))<a class="flex items-center gap-3 break-all text-white/85 no-underline hover:text-white" href="mailto:{{ $d->text('email') }}"><span class="t-accent">✉</span>{{ $d->text('email') }}</a>@endif
@@ -18,7 +18,7 @@
             <a href="{{ $d->link($d->text('cv_link')) }}" target="_blank" rel="noopener nofollow" class="t-btn t-btn--accent mt-7 w-full">Download CV</a>
         @endif
         @if ($d->has('skills'))
-            <h2 class="mt-10 text-xs font-bold uppercase tracking-[0.2em] text-white/50">Skills</h2>
+            <h2 class="mt-10 text-xs font-bold uppercase tracking-[0.2em] text-white/50" {{ $d->f('skills') }}>Skills</h2>
             <ul class="mt-3 flex flex-wrap gap-2">
                 @foreach ($d->items('skills') as $s)<li class="rounded-md bg-white/10 px-2.5 py-1 text-sm">{{ $s['name'] ?? '' }}</li>@endforeach
             </ul>
@@ -33,7 +33,7 @@
         </section>
 
         @if ($d->has('stats'))
-            <section class="mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
+            <section class="mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4" {{ $d->f('stats') }}>
                 @foreach ($d->items('stats') as $i => $s)
                     <div class="t-reveal rounded-2xl bg-white p-5 shadow-sm" style="--i: {{ $i }}">
                         <p class="font-heading text-4xl font-extrabold t-accent">{{ $s['value'] ?? '' }}</p>
@@ -44,7 +44,7 @@
         @endif
 
         @if ($d->has('experience'))
-            <section class="mt-14 max-w-3xl">
+            <section class="mt-14 max-w-3xl" {{ $d->f('experience') }}>
                 <h2 class="font-heading text-2xl font-extrabold t-primary">Experience</h2>
                 <ol class="relative mt-6 space-y-8 border-l-2 pl-7" style="border-color: color-mix(in oklab, var(--t-accent) 50%, transparent)">
                     @foreach ($d->items('experience') as $e)
@@ -61,7 +61,7 @@
         @endif
 
         @if ($d->has('education'))
-            <section class="mt-14 max-w-3xl">
+            <section class="mt-14 max-w-3xl" {{ $d->f('education') }}>
                 <h2 class="font-heading text-2xl font-extrabold t-primary">Education</h2>
                 <div class="mt-5 grid gap-4 sm:grid-cols-2">
                     @foreach ($d->items('education') as $e)

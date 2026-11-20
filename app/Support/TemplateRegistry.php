@@ -26,7 +26,14 @@ class TemplateRegistry
         'noto-serif-bengali' => ['label' => 'Noto Serif Bengali', 'css' => "'Noto Serif Bengali', serif", 'google' => 'Noto+Serif+Bengali:wght@400;600;700'],
         'tiro-bangla' => ['label' => 'Tiro Bangla', 'css' => "'Tiro Bangla', serif", 'google' => 'Tiro+Bangla:ital@0;1'],
         'galada' => ['label' => 'Galada (Bangla display)', 'css' => "'Galada', cursive", 'google' => 'Galada'],
-        'baloo-da' => ['label' => 'Baloo Da 2 (Bangla rounded)', 'css' => "'Baloo Da 2', sans-serif", 'google' => 'Baloo+Da+2:wght@500;700'],
+        'baloo-da' => ['label' => 'Baloo Da 2 (Bangla rounded)', 'css' => "'Baloo Da 2', sans-serif", 'google' => 'Baloo+Da+2:wght@500;700;800'],
+        'anek-bangla' => ['label' => 'Anek Bangla (Bangla display)', 'css' => "'Anek Bangla', 'Hind Siliguri', sans-serif", 'google' => 'Anek+Bangla:wght@300;500;700;800'],
+        'atma' => ['label' => 'Atma (Bangla playful)', 'css' => "'Atma', 'Hind Siliguri', cursive", 'google' => 'Atma:wght@400;600;700'],
+        'mina' => ['label' => 'Mina (Bangla)', 'css' => "'Mina', 'Hind Siliguri', sans-serif", 'google' => 'Mina:wght@400;700'],
+        'great-vibes' => ['label' => 'Great Vibes (script)', 'css' => "'Great Vibes', 'Galada', cursive", 'google' => 'Great+Vibes'],
+        'italiana' => ['label' => 'Italiana (elegant)', 'css' => "'Italiana', 'Noto Serif Bengali', serif", 'google' => 'Italiana'],
+        'instrument-serif' => ['label' => 'Instrument Serif', 'css' => "'Instrument Serif', 'Noto Serif Bengali', serif", 'google' => 'Instrument+Serif:ital@0;1'],
+        'bricolage' => ['label' => 'Bricolage Grotesque', 'css' => "'Bricolage Grotesque', 'Anek Bangla', sans-serif", 'google' => 'Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800'],
     ];
 
     /** Fonts always loaded alongside the template's choices so Bangla renders well. */
@@ -47,6 +54,12 @@ class TemplateRegistry
             'modern-service' => self::modernService(),
             'photo-memories' => self::photoMemories(),
             'event-invitation' => self::eventInvitation(),
+            'proposal' => self::proposal(),
+            'gift-surprise' => self::giftSurprise(),
+            'reasons-cards' => self::reasonsCards(),
+            'travel-diary' => self::travelDiary(),
+            'tribute' => self::tribute(),
+            'festival-greeting' => self::festivalGreeting(),
         ];
     }
 
@@ -58,6 +71,55 @@ class TemplateRegistry
     public static function options(): array
     {
         return collect(self::layouts())->mapWithKeys(fn ($l, $k) => [$k => $l['label']])->all();
+    }
+
+    /**
+     * The order form's map of a layout: which part of the page each field fills.
+     * Sections follow the page from top to bottom; fields not listed land in "আরও কিছু".
+     *
+     * @param  array<int, array>  $fields  the template's field schemas (may include admin-added fields)
+     */
+    public static function guide(?string $layout, array $fields, ?array $sample = null): array
+    {
+        $def = self::layout($layout);
+        $sections = self::guides()[$layout] ?? [];
+        $sample ??= $def['sample'] ?? [];
+        $keys = collect($fields)->pluck('key')->all();
+        $placed = [];
+        $out = [];
+        foreach ($sections as $sec) {
+            $f = array_values(array_filter($sec['fields'], fn ($k) => in_array($k, $keys, true)));
+            if (! $f) {
+                continue;
+            }
+            $placed = array_merge($placed, $f);
+            $out[] = ['title' => $sec['title'], 'where' => $sec['where'], 'icon' => $sec['icon'], 'fields' => $f];
+        }
+        $rest = array_values(array_diff($keys, $placed));
+        if ($rest) {
+            $out[] = ['title' => 'আরও কিছু', 'where' => 'পেজের নিচের দিকে আলাদা অংশে দেখাবে', 'icon' => '➕', 'fields' => $rest];
+        }
+        $total = count($out);
+        foreach ($out as $i => &$sec) {
+            $sec['n'] = $i + 1;
+            $sec['total'] = $total;
+        }
+
+        $examples = [];
+        foreach ($keys as $k) {
+            $v = $sample[$k] ?? null;
+            if (is_array($v) && isset($v['url'])) {
+                $examples[$k] = ['image' => $v['thumb'] ?? $v['url']];
+            } elseif (is_array($v) && isset($v[0]['url'])) {
+                $examples[$k] = ['image' => $v[0]['thumb'] ?? $v[0]['url'], 'count' => count($v)];
+            } elseif (is_array($v) && isset($v[0]) && is_array($v[0])) {
+                $examples[$k] = ['row' => $v[0], 'count' => count($v)];
+            } elseif (is_string($v) && $v !== '') {
+                $examples[$k] = ['text' => \Illuminate\Support\Str::limit(preg_replace('/\s+/u', ' ', $v), 90)];
+            }
+        }
+
+        return ['sections' => $out, 'examples' => $examples];
     }
 
     public static function view(?string $key): string
@@ -549,6 +611,320 @@ class TemplateRegistry
                 'message' => 'আমাদের জীবনের নতুন অধ্যায়ের শুরুতে আপনার উপস্থিতি ও দোয়া কামনা করছি।',
                 'schedule' => [['time' => '৭:০০', 'title' => 'অতিথি আগমন'], ['time' => '৮:০০', 'title' => 'বিবাহ অনুষ্ঠান'], ['time' => '৯:০০', 'title' => 'নৈশভোজ']],
                 'dress_code' => 'Traditional', 'gallery' => [self::img('couple-a'), self::img('couple-c')], 'rsvp_phone' => '01700000000',
+            ],
+        ];
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Order-form guide: page sections from top to bottom                  */
+    /* ------------------------------------------------------------------ */
+
+    private static function sec(string $icon, string $title, string $where, array $fields): array
+    {
+        return compact('icon', 'title', 'where', 'fields');
+    }
+
+    public static function guides(): array
+    {
+        return [
+            'romantic-story' => [
+                self::sec('💌', 'প্রথম পাতা', 'পেজ খুললেই একদম উপরে: দুজনের নাম, বড় ছবি আর কত দিন একসাথে', ['your_name', 'their_name', 'relationship', 'hero_photo', 'headline', 'start_date']),
+                self::sec('📖', 'আপনাদের গল্প', 'ছবির ঠিক নিচে, বড় অক্ষরে শুরু হওয়া গল্পের অংশ', ['story']),
+                self::sec('🌸', 'প্রিয় মুহূর্তগুলো', 'গল্পের পরে ছোট ছোট কার্ডে, প্রতিটা স্মৃতি আলাদা কার্ডে', ['favorite_memories']),
+                self::sec('📸', 'ছবির দেয়াল', 'পোলারয়েড ছবির মতো বাঁকা করে সাজানো গ্যালারি', ['gallery']),
+                self::sec('✨', 'প্রিয় লাইন', 'বড় বাঁকা অক্ষরে, একটার পর একটা উক্তি', ['quotes']),
+                self::sec('❤️', 'শেষ চিঠি', 'একদম শেষে গাঢ় রঙের কার্ডে, তার নাম ধরে লেখা আপনার বার্তা', ['special_message']),
+            ],
+            'memory-timeline' => [
+                self::sec('🏠', 'প্রথম পাতা', 'একদম উপরে: শিরোনাম, দুজনের নাম, কভার ছবি আর ছোট্ট পরিচিতি', ['title', 'your_name', 'their_name', 'cover_photo', 'intro']),
+                self::sec('🧵', 'সুতোয় ঝোলানো মুহূর্তগুলো', 'মাঝখানে একটা সুতো ধরে, তারিখ অনুযায়ী একটার পর একটা কার্ড। প্রতিটা কার্ডের পাশে গ্যালারির একটা করে ছবি বসবে', ['timeline', 'gallery']),
+                self::sec('💛', 'শেষ কথা', 'একদম শেষে, হাতের লেখার মতো অক্ষরে', ['closing_message']),
+            ],
+            'love-letter' => [
+                self::sec('✉️', 'খামের উপর', 'পেজ খুললেই একটা খাম, তার উপরে "প্রতি" আর "প্রেরক"', ['to_name', 'from_name', 'letter_date']),
+                self::sec('📝', 'চিঠির ভেতর', 'খাম খুললে লাইন টানা কাগজে আপনার চিঠি, টাইপ হতে হতে দেখা যাবে', ['opening', 'letter', 'signature']),
+                self::sec('📷', 'চিঠির সাথে ছবি', 'চিঠির কোণায় টেপ দিয়ে লাগানো একটা ছবি', ['photo']),
+                self::sec('✒️', 'পুনশ্চ', 'চিঠির একদম নিচে ছোট্ট করে', ['ps']),
+            ],
+            'birthday-celebration' => [
+                self::sec('🎈', 'প্রথম পাতা', 'বেলুন উড়ছে, বড় করে নাম, বয়স আর কাউন্টডাউন', ['birthday_name', 'age', 'birthday_date', 'hero_photo']),
+                self::sec('🎂', 'কেক আর বার্তা', 'মোমবাতিওয়ালা কেক। মোমবাতি নেভালে আপনার বার্তাটা বেরিয়ে আসবে', ['message', 'from_name']),
+                self::sec('🌟', 'একসাথের স্মৃতি', 'রঙিন কার্ডে ছোট ছোট স্মৃতি', ['memories']),
+                self::sec('📸', 'ছবির গ্যালারি', 'বিভিন্ন সাইজের ছবির কোলাজ', ['gallery']),
+                self::sec('💬', 'সবার শুভেচ্ছা', 'স্টিকি নোটের দেয়াল, প্রতিটা শুভেচ্ছা একেকটা নোট', ['wishes']),
+            ],
+            'our-journey' => [
+                self::sec('💍', 'প্রথম পাতা', 'আলপনার মাঝে খিলান আকারের ছবি, দুজনের নাম আর বছর-মাস-দিনের হিসাব', ['partner_one', 'partner_two', 'anniversary_date', 'hero_photo', 'intro']),
+                self::sec('📜', 'অধ্যায়গুলো', 'বইয়ের পাতার মতো অধ্যায় ১, ২, ৩... একটার পর একটা', ['milestones']),
+                self::sec('🖼️', 'ছবিগুলো', 'সোনালি ফ্রেমের গ্যালারি', ['gallery']),
+                self::sec('💛', 'বার্ষিকীর বার্তা', 'একদম শেষে, নকশী কাঁথার মতো সেলাই করা ফ্রেমের ভেতরে', ['message']),
+            ],
+            'photo-memories' => [
+                self::sec('🎞️', 'প্রথম পাতা', 'সিনেমার পোস্টারের মতো কভার: অ্যালবামের নাম, কখন-কোথায়', ['title', 'subtitle', 'date_text', 'cover_photo', 'intro']),
+                self::sec('📸', 'ছবিগুলো', 'প্রিন্ট করা ছবির মতো, প্রতিটার নিচে আপনার ক্যাপশন', ['gallery']),
+                self::sec('🎬', 'এই গল্পের মানুষেরা', 'সিনেমার শেষের ক্রেডিটের মতো নামগুলো', ['people']),
+                self::sec('🌅', 'শেষ কথা', 'একদম শেষে "সমাপ্ত" লেখার আগে', ['closing_note']),
+            ],
+            'event-invitation' => [
+                self::sec('💌', 'দাওয়াতপত্রের মুখ', 'নকশা করা কার্ডের উপরে: অনুষ্ঠানের নাম, আয়োজক আর নিমন্ত্রণ বার্তা', ['event_title', 'hosts', 'hero_photo', 'message']),
+                self::sec('📅', 'কবে, কোথায়', 'বড় করে তারিখ, কাউন্টডাউন, সময়, ভেন্যু আর ম্যাপ বাটন', ['event_date', 'event_time', 'venue', 'map_link']),
+                self::sec('🕰️', 'অনুষ্ঠানসূচি', 'সময় ধরে ধরে কী কী হবে, সাথে ড্রেস কোড', ['schedule', 'dress_code']),
+                self::sec('📸', 'ছবি', 'ছবির গ্যালারি', ['gallery']),
+                self::sec('📞', 'যোগাযোগ', 'একদম শেষে কল আর WhatsApp বাটন', ['rsvp_phone']),
+            ],
+            'minimal-portfolio' => [
+                self::sec('👋', 'প্রথম পাতা', 'একদম উপরে: নাম, এক লাইনের পরিচয়, ছবি আর লোকেশন', ['full_name', 'headline', 'profile_photo', 'location']),
+                self::sec('🙂', 'আমার সম্পর্কে', 'নামের নিচে বড় করে আপনার কথা, সাথে দক্ষতাগুলো', ['about', 'skills']),
+                self::sec('💼', 'কাজ আর অভিজ্ঞতা', 'অভিজ্ঞতা, প্রজেক্ট আর শিক্ষা আলাদা তালিকায়', ['experience', 'projects', 'education']),
+                self::sec('📬', 'যোগাযোগ', 'একদম শেষে বড় করে ইমেইল, ফোন আর সোশ্যাল লিংক', ['email', 'phone', 'social_links']),
+            ],
+            'modern-professional' => [
+                self::sec('👔', 'প্রথম পাতা', 'নাম, পদবি, ছবি আর সারসংক্ষেপ', ['full_name', 'job_title', 'profile_photo', 'summary', 'location']),
+                self::sec('📊', 'সংখ্যায় হাইলাইট', 'বড় বড় সংখ্যার কার্ড (যেমন ৮+ বছর)', ['stats']),
+                self::sec('💼', 'অভিজ্ঞতা ও দক্ষতা', 'টাইমলাইনে চাকরিগুলো, পাশে দক্ষতা আর শিক্ষা', ['experience', 'skills', 'education']),
+                self::sec('📬', 'যোগাযোগ', 'শেষে CV ডাউনলোড, ইমেইল, ফোন আর লিংক', ['cv_link', 'email', 'phone', 'social_links']),
+            ],
+            'creative-portfolio' => [
+                self::sec('⚡', 'প্রথম পাতা', 'বিশাল অক্ষরে নাম, আপনি কী করেন আর প্রথম লাইন', ['full_name', 'role', 'intro', 'profile_photo']),
+                self::sec('🖼️', 'কাজের ছবি', 'বড় বড় ছবির গ্রিড, ক্যাপশনসহ', ['works']),
+                self::sec('🛠️', 'সার্ভিস ও পরিচিতি', 'সার্ভিসের তালিকা, আপনার কথা আর ক্লায়েন্টদের নামের চলন্ত লাইন', ['services', 'about', 'clients']),
+                self::sec('📬', 'যোগাযোগ', 'শেষে উজ্জ্বল রঙের যোগাযোগের অংশ', ['email', 'phone', 'social_links']),
+            ],
+            'clean-business' => [
+                self::sec('🏪', 'প্রথম পাতা', 'লোগো, ব্যবসার নাম, ট্যাগলাইন আর বড় কভার ছবি', ['business_name', 'tagline', 'logo', 'cover_photo']),
+                self::sec('ℹ️', 'আমাদের কথা', 'কভারের নিচে ব্যবসা সম্পর্কে', ['about']),
+                self::sec('🧾', 'পণ্য / সার্ভিস', 'মেনু বা দামের তালিকার মতো কার্ড', ['services', 'gallery']),
+                self::sec('📍', 'ঠিকানা ও যোগাযোগ', 'খোলার সময়, ঠিকানা, ম্যাপ, কল আর WhatsApp বাটন', ['hours', 'address', 'map_link', 'phone', 'whatsapp', 'email', 'social_links']),
+            ],
+            'modern-service' => [
+                self::sec('🚀', 'প্রথম পাতা', 'ডার্ক ব্যাকগ্রাউন্ডে বড় হেডলাইন, নাম আর ছবি', ['brand_name', 'headline', 'intro', 'photo']),
+                self::sec('🧩', 'সার্ভিস', 'নম্বর দেওয়া সার্ভিস কার্ড, সাথে শুরুর দাম', ['services']),
+                self::sec('🔁', 'কাজের ধাপ ও রিভিউ', 'ধাপে ধাপে কীভাবে কাজ করেন আর ক্লায়েন্টদের কথা', ['process', 'testimonials']),
+                self::sec('📬', 'যোগাযোগ', 'শেষে বড় বাটন আর যোগাযোগের লিংক', ['cta_text', 'email', 'phone', 'whatsapp', 'social_links']),
+            ],
+            'proposal' => [
+                self::sec('💍', 'প্রথম পর্দা', 'পেজ খুললেই পর্দা: "{তার নাম}, তোমার জন্য একটা প্রশ্ন আছে"', ['their_name', 'your_name']),
+                self::sec('💭', 'মনের কথাগুলো', 'একটা একটা করে লাইন আসবে, "পরের কথা" চাপলে পরেরটা। সাথে দুজনের ছবি', ['lines', 'hero_photo']),
+                self::sec('❓', 'আসল প্রশ্ন', 'আংটির নিচে বড় করে প্রশ্ন, আর হ্যাঁ / না বাটন (না বাটন পালিয়ে যায়!)', ['question']),
+                self::sec('🎉', 'হ্যাঁ বললে', 'হ্যাঁ চাপলে আতশবাজি, আর এই লেখা ও ছবিগুলো বেরিয়ে আসবে', ['yes_message', 'gallery', 'whatsapp']),
+            ],
+            'gift-surprise' => [
+                self::sec('🎁', 'গিফট বক্স', 'পেজ খুললেই একটা নড়তে থাকা গিফট বক্স, উপরে ছোট্ট একটা লাইন', ['to_name', 'teaser']),
+                self::sec('✨', 'স্ক্র্যাচ কার্ড', 'বক্স খুললে একটা কার্ড, আঙুল দিয়ে ঘষলে আসল সারপ্রাইজটা দেখা যাবে', ['surprise', 'surprise_photo']),
+                self::sec('💌', '"যখন... তখন খুলো" চিঠি', 'ছোট ছোট খাম, প্রতিটার উপরে কখন খুলতে হবে লেখা', ['open_when']),
+                self::sec('❤️', 'শেষ কথা', 'একদম শেষে আপনার নামসহ', ['closing_message', 'from_name']),
+            ],
+            'reasons-cards' => [
+                self::sec('🃏', 'প্রথম পাতা', 'বড় করে শিরোনাম আর মোট কয়টা কারণ, সাথে ছবি', ['title', 'to_name', 'photo', 'intro']),
+                self::sec('🔢', 'কারণের কার্ডগুলো', 'নম্বর লেখা কার্ড, ট্যাপ করলে উল্টে গিয়ে কারণটা দেখায়', ['reasons']),
+                self::sec('💛', 'শেষ কথা', 'কার্ডগুলোর পরে, আপনার নামসহ', ['closing_message', 'from_name']),
+            ],
+            'travel-diary' => [
+                self::sec('🎫', 'বোর্ডিং পাস', 'একদম উপরে টিকিটের মতো: কোথা থেকে কোথায়, কবে, কারা', ['trip_title', 'from_place', 'to_place', 'travel_date', 'travelers', 'cover_photo']),
+                self::sec('🗺️', 'ভ্রমণের গল্প', 'পরিচিতি, তারপর দিন ধরে ধরে প্রতিটা জায়গা, সাথে সিল-ছাপ্পর', ['intro', 'stops']),
+                self::sec('📊', 'সংখ্যায় ট্রিপ', 'মজার সংখ্যার কার্ড (যেমন ১২ কাপ চা)', ['stats']),
+                self::sec('📸', 'স্ক্র্যাপবুক', 'টেপ দিয়ে লাগানো ছবির মতো গ্যালারি আর শেষ কথা', ['gallery', 'closing_note']),
+            ],
+            'tribute' => [
+                self::sec('🕯️', 'প্রথম পাতা', 'জ্বলন্ত মোমবাতি, নাম, সম্পর্ক আর জন্ম-মৃত্যুর সাল, মাঝখানে ছবি', ['full_name', 'relation', 'born', 'passed', 'portrait']),
+                self::sec('📖', 'জীবনের গল্প', 'শান্ত অক্ষরে তাঁর জীবনের কথা', ['life_story']),
+                self::sec('🌿', 'যা শিখিয়ে গেছেন', 'পাতার চিহ্ন দেওয়া তালিকা', ['lessons']),
+                self::sec('🖼️', 'স্মৃতির ছবি', 'সাদা-কালো থেকে রঙিন হয়ে ওঠা ছবি', ['gallery']),
+                self::sec('🪔', 'দোয়া ও প্রদীপ', 'শেষে আপনার প্রার্থনা, পরিবারের নাম আর "প্রদীপ জ্বালান" বাটন', ['prayer', 'from_family']),
+            ],
+            'festival-greeting' => [
+                self::sec('🌙', 'প্রথম পাতা', 'উৎসব অনুযায়ী সাজ (চাঁদ-লণ্ঠন, আলপনা বা প্রদীপ), বড় করে শুভেচ্ছা', ['festival', 'greeting_title', 'to_name']),
+                self::sec('💌', 'শুভেচ্ছা বার্তা', 'নকশা করা কার্ডের ভেতরে আপনার বার্তা আর ছবি', ['message', 'photo']),
+                self::sec('👨‍👩‍👧', 'কাদের পক্ষ থেকে', 'বার্তার নিচে নাম', ['from_name', 'family']),
+                self::sec('🧧', 'সালামি কর্নার', 'মজার "সালামি পাঠাও" অংশ, bKash নম্বর কপি করার বাটনসহ (ঐচ্ছিক)', ['salami_number']),
+            ],
+        ];
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* New layouts                                                         */
+    /* ------------------------------------------------------------------ */
+
+    private static function proposal(): array
+    {
+        return [
+            'label' => 'Proposal',
+            'theme' => ['primary' => '#3B0A2A', 'accent' => '#FF6FA4', 'background' => '#1B0614', 'text' => '#FCE9F1', 'font_heading' => 'great-vibes', 'font_body' => 'hind-siliguri', 'font_accent' => 'anek-bangla'],
+            'fields' => [
+                self::f('their_name', 'যাকে প্রস্তাব দিচ্ছেন, তার নাম', 'text', ['required' => true, 'max_length' => 40, 'placeholder' => 'যেমন: নীলা']),
+                self::f('your_name', 'আপনার নাম', 'text', ['required' => true, 'max_length' => 40]),
+                self::f('lines', 'মনের কথাগুলো (একটা একটা করে আসবে)', 'repeater', ['required' => true, 'help' => '৩ থেকে ৬টা ছোট লাইন সবচেয়ে ভালো লাগে।', 'options' => ['max' => 10, 'fields' => [['key' => 'text', 'label' => 'লাইন', 'type' => 'textarea']]]]),
+                self::f('hero_photo', 'দুজনের একটা ছবি', 'image'),
+                self::f('question', 'আসল প্রশ্নটা', 'text', ['max_length' => 80, 'placeholder' => 'তুমি কি আমার হবে?']),
+                self::f('yes_message', '"হ্যাঁ" বললে যা দেখাবে', 'textarea', ['required' => true, 'max_length' => 1500]),
+                self::f('gallery', 'হ্যাঁ বলার পর দেখানোর ছবি', 'gallery', ['options' => ['max' => 12]]),
+                self::f('whatsapp', 'আপনার WhatsApp নম্বর', 'phone', ['help' => 'দিলে "হ্যাঁ" বলার পর সে আপনাকে সরাসরি WhatsApp-এ জানাতে পারবে।']),
+            ],
+            'sample' => [
+                'their_name' => 'নীলা', 'your_name' => 'আরিফ',
+                'lines' => [
+                    ['text' => 'মনে আছে, টিএসসির সেই বিকেলে তুমি বলেছিলে চা ছাড়া তোমার দিন শুরু হয় না?'],
+                    ['text' => 'সেদিন থেকে আমার প্রতিটা সকাল শুরু হয় তোমার কথা ভেবে।'],
+                    ['text' => 'তোমার হাসি, তোমার রাগ, তোমার বকবক, সব আমার প্রিয়।'],
+                    ['text' => 'তাই আজ একটা কথা জিজ্ঞেস করতে চাই…'],
+                ],
+                'hero_photo' => self::img('couple-a'),
+                'question' => 'তুমি কি সারাজীবন আমার পাশে থাকবে?',
+                'yes_message' => "জানতাম তুমি হ্যাঁ বলবে! 💍\n\nআজ থেকে তোমার চায়ের দায়িত্ব আমার। ভালোবাসি, নীলা।",
+                'gallery' => [self::img('couple-b'), self::img('flowers'), self::img('couple-c')],
+                'whatsapp' => '',
+            ],
+        ];
+    }
+
+    private static function giftSurprise(): array
+    {
+        return [
+            'label' => 'Surprise Gift Box',
+            'theme' => ['primary' => '#E63946', 'accent' => '#FFD166', 'background' => '#FFF4E6', 'text' => '#2B1B17', 'font_heading' => 'atma', 'font_body' => 'hind-siliguri', 'font_accent' => 'caveat'],
+            'fields' => [
+                self::f('to_name', 'সারপ্রাইজটা কার জন্য', 'text', ['required' => true, 'max_length' => 40]),
+                self::f('teaser', 'বক্সের উপরের লাইন', 'text', ['max_length' => 100, 'placeholder' => 'তোমার জন্য একটা জিনিস লুকিয়ে রেখেছি…']),
+                self::f('surprise', 'আসল সারপ্রাইজ (স্ক্র্যাচ করলে দেখা যাবে)', 'textarea', ['required' => true, 'max_length' => 600, 'placeholder' => 'যেমন: শুক্রবার আমরা কক্সবাজার যাচ্ছি! টিকিট কাটা শেষ 🎟️']),
+                self::f('surprise_photo', 'সারপ্রাইজের সাথে একটা ছবি', 'image'),
+                self::f('open_when', '"যখন... তখন খুলো" চিঠিগুলো', 'repeater', ['help' => 'যেমন: "যখন মন খারাপ লাগবে" → ভেতরে তাকে হাসানোর একটা কথা।', 'options' => ['max' => 8, 'fields' => [
+                    ['key' => 'when', 'label' => 'কখন খুলবে', 'type' => 'text'], ['key' => 'message', 'label' => 'ভেতরের কথা', 'type' => 'textarea'],
+                ]]]),
+                self::f('closing_message', 'শেষ কথা', 'textarea', ['max_length' => 1200]),
+                self::f('from_name', 'আপনার নাম', 'text', ['max_length' => 40]),
+            ],
+            'sample' => [
+                'to_name' => 'তিথি', 'teaser' => 'তোমার জন্য একটা জিনিস লুকিয়ে রেখেছি…',
+                'surprise' => 'এই শুক্রবার আমরা সাজেক যাচ্ছি! বাসের টিকিট কাটা শেষ, ব্যাগ গোছাও 🎒',
+                'surprise_photo' => self::img('landscape-a'),
+                'open_when' => [
+                    ['when' => 'যখন মন খারাপ লাগবে', 'message' => 'মনে রেখো, তুমি একা না। একটা কল দাও, আমি ১০ মিনিটে ফুচকা নিয়ে হাজির।'],
+                    ['when' => 'যখন ঘুম আসবে না', 'message' => 'জানালা দিয়ে চাঁদটা দেখো। আমিও হয়তো ঠিক তখনই দেখছি।'],
+                    ['when' => 'যখন নিজেকে ছোট মনে হবে', 'message' => 'তুমি আমার দেখা সবচেয়ে সাহসী মানুষ। সত্যি।'],
+                ],
+                'closing_message' => 'তুমি হাসলে আমার দিন ভালো যায়। তাই এই ছোট্ট আয়োজন।',
+                'from_name' => 'রাহাত',
+            ],
+        ];
+    }
+
+    private static function reasonsCards(): array
+    {
+        return [
+            'label' => 'Reasons Cards',
+            'theme' => ['primary' => '#1D3557', 'accent' => '#F4A261', 'background' => '#F1FAEE', 'text' => '#1D3557', 'font_heading' => 'bricolage', 'font_body' => 'hind-siliguri', 'font_accent' => 'caveat'],
+            'fields' => [
+                self::f('title', 'শিরোনাম', 'text', ['max_length' => 80, 'placeholder' => 'তোমাকে ভালোবাসার কারণগুলো']),
+                self::f('to_name', 'কার জন্য', 'text', ['required' => true, 'max_length' => 40]),
+                self::f('photo', 'তার একটা ছবি', 'image'),
+                self::f('intro', 'ছোট্ট ভূমিকা', 'textarea', ['max_length' => 600]),
+                self::f('reasons', 'কারণগুলো', 'repeater', ['required' => true, 'help' => 'প্রতিটা কারণ একেকটা কার্ড হবে। যত খুশি দিন (সর্বোচ্চ ৬০)।', 'options' => ['max' => 60, 'fields' => [['key' => 'text', 'label' => 'কারণ', 'type' => 'textarea']]]]),
+                self::f('closing_message', 'শেষ কথা', 'textarea', ['max_length' => 1000]),
+                self::f('from_name', 'আপনার নাম', 'text', ['max_length' => 40]),
+            ],
+            'sample' => [
+                'title' => 'আম্মু, তোমাকে ভালোবাসার কারণগুলো', 'to_name' => 'আম্মু', 'photo' => self::img('portrait-c'),
+                'intro' => 'সব কারণ লিখতে গেলে খাতা ফুরিয়ে যাবে। তাই অল্প কয়েকটা এখানে রাখলাম।',
+                'reasons' => [
+                    ['text' => 'জ্বর হলে সারারাত জেগে মাথায় পানি দাও।'], ['text' => 'আমার প্রিয় খিচুড়িটা শুধু তুমিই এভাবে রাঁধতে পারো।'],
+                    ['text' => 'পরীক্ষার আগের রাতে বলো, "যা হবে ভালোই হবে"।'], ['text' => 'আমি দেরি করে ফিরলে বারান্দায় দাঁড়িয়ে থাকো।'],
+                    ['text' => 'রাগ করলেও ভাত বেড়ে রাখো।'], ['text' => 'তোমার হাসিটা পুরো বাড়ি আলো করে দেয়।'],
+                    ['text' => 'আমার সব বোকামি গোপন রাখো।'], ['text' => 'তুমি আমার প্রথম বন্ধু।'],
+                ],
+                'closing_message' => 'তুমি না থাকলে আমি "আমি" হতাম না। ভালোবাসি আম্মু।',
+                'from_name' => 'তোমার পাগলি মেয়ে',
+            ],
+        ];
+    }
+
+    private static function travelDiary(): array
+    {
+        return [
+            'label' => 'Travel Diary',
+            'theme' => ['primary' => '#0B4F6C', 'accent' => '#F6AE2D', 'background' => '#F3EDE2', 'text' => '#20323A', 'font_heading' => 'bricolage', 'font_body' => 'hind-siliguri', 'font_accent' => 'caveat'],
+            'fields' => [
+                self::f('trip_title', 'ট্রিপের নাম', 'text', ['required' => true, 'max_length' => 80, 'placeholder' => 'চার বন্ধুর বান্দরবান']),
+                self::f('from_place', 'কোথা থেকে', 'text', ['max_length' => 30, 'placeholder' => 'ঢাকা']),
+                self::f('to_place', 'কোথায়', 'text', ['required' => true, 'max_length' => 30, 'placeholder' => 'বান্দরবান']),
+                self::f('travel_date', 'কবে', 'text', ['max_length' => 40, 'placeholder' => 'ডিসেম্বর ২০২৫']),
+                self::f('travelers', 'কারা গিয়েছিলেন', 'text', ['max_length' => 160, 'help' => 'নামগুলো কমা দিয়ে আলাদা করুন']),
+                self::f('cover_photo', 'কভার ছবি', 'image', ['required' => true]),
+                self::f('intro', 'ট্রিপের শুরুর কথা', 'textarea', ['max_length' => 1500]),
+                self::f('stops', 'দিন ধরে ধরে গল্প', 'repeater', ['options' => ['max' => 12, 'fields' => [
+                    ['key' => 'day', 'label' => 'দিন', 'type' => 'text'], ['key' => 'place', 'label' => 'জায়গা', 'type' => 'text'], ['key' => 'story', 'label' => 'কী হয়েছিল', 'type' => 'textarea'],
+                ]]]),
+                self::f('stats', 'মজার সংখ্যা', 'repeater', ['help' => 'যেমন: "৩৭" কাপ চা, "৪" বার পথ হারানো', 'options' => ['max' => 4, 'fields' => [
+                    ['key' => 'value', 'label' => 'সংখ্যা', 'type' => 'text'], ['key' => 'label', 'label' => 'কীসের', 'type' => 'text'],
+                ]]]),
+                self::f('gallery', 'ট্রিপের ছবি', 'gallery', ['options' => ['max' => 30]]),
+                self::f('closing_note', 'শেষ কথা', 'textarea', ['max_length' => 800]),
+            ],
+            'sample' => [
+                'trip_title' => 'চার বন্ধুর বান্দরবান', 'from_place' => 'ঢাকা', 'to_place' => 'বান্দরবান', 'travel_date' => 'ডিসেম্বর ২০২৫',
+                'travelers' => 'সাকিব, তানহা, রাফি, মিতু', 'cover_photo' => self::img('landscape-b'),
+                'intro' => 'রাত ১১টার বাস, এক ব্যাগ চিপস আর অনেক প্ল্যান। প্ল্যানের অর্ধেকও মানা হয়নি, কিন্তু ট্রিপটা হয়েছিল জীবনের সেরা।',
+                'stops' => [
+                    ['day' => 'দিন ১', 'place' => 'নীলগিরি', 'story' => 'মেঘের উপরে দাঁড়িয়ে সূর্যোদয়। কেউ কোনো কথা বলেনি।'],
+                    ['day' => 'দিন ২', 'place' => 'নাফাখুম', 'story' => 'নৌকা, হাঁটা, আবার নৌকা। পা ব্যথা, মন ভালো।'],
+                    ['day' => 'দিন ৩', 'place' => 'বগা লেক', 'story' => 'রাতে আগুনের পাশে গান, আকাশ ভর্তি তারা।'],
+                ],
+                'stats' => [['value' => '৩৭', 'label' => 'কাপ চা'], ['value' => '৪', 'label' => 'বার পথ হারানো'], ['value' => '১২০০', 'label' => 'ছবি তোলা']],
+                'gallery' => array_map(function ($n, $c) { $i = self::img($n); $i['caption'] = $c; return $i; },
+                    ['landscape-a', 'friends', 'landscape-c', 'art-a'], ['মেঘের সমুদ্র', 'চার পাগল', 'ঝর্নার পথে', 'রাতের আগুন']),
+                'closing_note' => 'পরের ট্রিপ? সেন্ট মার্টিন। ডেট ঠিক হয়নি, কিন্তু যাবই।',
+            ],
+        ];
+    }
+
+    private static function tribute(): array
+    {
+        return [
+            'label' => 'In Loving Memory',
+            'theme' => ['primary' => '#2F3A32', 'accent' => '#C9A66B', 'background' => '#F4F0E8', 'text' => '#2B2B26', 'font_heading' => 'cormorant', 'font_body' => 'noto-serif-bengali', 'font_accent' => 'tiro-bangla'],
+            'fields' => [
+                self::f('full_name', 'তাঁর নাম', 'text', ['required' => true, 'max_length' => 80]),
+                self::f('relation', 'আপনাদের কাছে তিনি', 'text', ['max_length' => 60, 'placeholder' => 'আমাদের প্রিয় আব্বু']),
+                self::f('born', 'জন্ম (সাল বা তারিখ)', 'text', ['max_length' => 30, 'placeholder' => '১৯৫২']),
+                self::f('passed', 'মৃত্যু (সাল বা তারিখ)', 'text', ['max_length' => 30, 'placeholder' => '২০২৪']),
+                self::f('portrait', 'তাঁর ছবি', 'image', ['required' => true]),
+                self::f('life_story', 'তাঁর জীবনের গল্প', 'textarea', ['required' => true, 'max_length' => 5000]),
+                self::f('lessons', 'যা শিখিয়ে গেছেন', 'repeater', ['options' => ['max' => 10, 'fields' => [['key' => 'text', 'label' => 'শিক্ষা', 'type' => 'text']]]]),
+                self::f('gallery', 'স্মৃতির ছবি', 'gallery', ['options' => ['max' => 30]]),
+                self::f('prayer', 'দোয়া / প্রার্থনা', 'textarea', ['max_length' => 800]),
+                self::f('from_family', 'কাদের পক্ষ থেকে', 'text', ['max_length' => 120, 'placeholder' => 'রহমান পরিবার']),
+            ],
+            'sample' => [
+                'full_name' => 'আব্দুর রহমান', 'relation' => 'আমাদের প্রিয় আব্বু', 'born' => '১৯৫২', 'passed' => '২০২৪',
+                'portrait' => self::img('portrait-b'),
+                'life_story' => "কুমিল্লার এক ছোট্ট গ্রামে জন্ম। স্কুলশিক্ষক হিসেবে চল্লিশ বছর কাটিয়েছেন, হাজারো ছাত্রছাত্রীর প্রিয় \"রহমান স্যার\"।\n\nভোরবেলা হাঁটা, রেডিওতে খবর আর বিকেলে বাগানের যত্ন, এই ছিল তাঁর দিন। কখনো উঁচু গলায় কথা বলতে শুনিনি।",
+                'lessons' => [['text' => 'সৎ থাকো, বাকিটা আল্লাহ দেখবেন।'], ['text' => 'বই কখনো ধার দিয়ে ফেরত চাইতে লজ্জা পেয়ো না।'], ['text' => 'মানুষকে সম্মান দাও, সে যেই হোক।']],
+                'gallery' => [self::img('landscape-c'), self::img('flowers'), self::img('friends')],
+                'prayer' => 'আল্লাহ তাঁকে জান্নাতুল ফেরদৌস দান করুন।',
+                'from_family' => 'রহমান পরিবার',
+            ],
+        ];
+    }
+
+    private static function festivalGreeting(): array
+    {
+        return [
+            'label' => 'Festival Greeting',
+            'theme' => ['primary' => '#0F3D3E', 'accent' => '#E8B931', 'background' => '#06201F', 'text' => '#F6F1E1', 'font_heading' => 'galada', 'font_body' => 'hind-siliguri', 'font_accent' => 'anek-bangla'],
+            'fields' => [
+                self::f('festival', 'কোন উৎসব', 'select', ['required' => true, 'options' => ['choices' => ['ঈদ মোবারক', 'শুভ নববর্ষ', 'শারদীয় শুভেচ্ছা', 'শুভ দীপাবলি', 'বড়দিনের শুভেচ্ছা', 'হ্যাপি নিউ ইয়ার']]]),
+                self::f('greeting_title', 'বড় করে শুভেচ্ছার লাইন', 'text', ['max_length' => 80, 'placeholder' => 'ঈদের খুশি ছড়িয়ে পড়ুক সবখানে']),
+                self::f('to_name', 'কার জন্য (ঐচ্ছিক)', 'text', ['max_length' => 60, 'placeholder' => 'প্রিয় নানুভাই']),
+                self::f('message', 'শুভেচ্ছা বার্তা', 'textarea', ['required' => true, 'max_length' => 1500]),
+                self::f('photo', 'একটা ছবি', 'image'),
+                self::f('from_name', 'কার পক্ষ থেকে', 'text', ['required' => true, 'max_length' => 60]),
+                self::f('family', 'পরিবারের অন্যরা', 'text', ['max_length' => 160, 'help' => 'নামগুলো কমা দিয়ে আলাদা করুন']),
+                self::f('salami_number', 'সালামির bKash নম্বর 😄', 'phone', ['help' => 'মজার জন্য। দিলে পেজে "সালামি পাঠাও" অংশ দেখাবে।']),
+            ],
+            'sample' => [
+                'festival' => 'ঈদ মোবারক', 'greeting_title' => 'ঈদের খুশি ছড়িয়ে পড়ুক সবখানে', 'to_name' => 'প্রিয় বন্ধুরা',
+                'message' => "রমজানের শেষে আবার এলো খুশির ঈদ। সেমাই, নতুন জামা আর সবার হাসিমুখ, এই দিনটা হোক আপনার পরিবারের জন্য অনেক আনন্দের।\n\nঈদ মোবারক!",
+                'photo' => self::img('friends'), 'from_name' => 'সাকিব ও পরিবার', 'family' => 'আম্মু, আব্বু, তানহা, ছোট্ট রাইয়ান',
+                'salami_number' => '01700000000',
             ],
         ];
     }

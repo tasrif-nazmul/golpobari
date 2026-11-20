@@ -13,7 +13,8 @@ Built with Laravel 12 (PHP 8.2+), MySQL/MariaDB, Blade, Tailwind CSS 4 and Alpin
 | Public site (home, categories, templates, pricing, FAQ, contact, policies) | `app/Http/Controllers`, `resources/views/site` |
 | 10-step order wizard (mobile first, saves progress, client-side photo shrink) | `resources/views/site/order.blade.php`, `resources/js/wizard.js` |
 | Order submit, pricing, coupons, payments, pages, images | `app/Services` |
-| Customer page layouts (12) and their field definitions | `resources/views/page-templates`, `app/Support/TemplateRegistry.php` |
+| Customer page layouts (18) and their field definitions | `resources/views/page-templates`, `app/Support/TemplateRegistry.php` |
+| Order-form page map (which field lands in which part of the page) | `TemplateRegistry::guides()`, step 3 of the wizard |
 | Admin panel | `app/Http/Controllers/Admin`, `resources/views/admin` |
 | Settings with defaults | `config/golpobari.php` (defaults), `settings` table (your edits) |
 | Scheduled jobs | `routes/console.php`: expire pages hourly, clean abandoned uploads daily |
@@ -35,7 +36,7 @@ composer install
 npm install
 cp .env.example .env            # then set APP_ENV=local, APP_DEBUG=true, DB_*, SESSION_SECURE_COOKIE=false
 php artisan key:generate
-php artisan migrate --seed      # categories, 13 templates, 4 packages, FAQ, policy pages. No admin user.
+php artisan migrate --seed      # categories, 20 templates, 4 packages, FAQ, policy pages. No admin user.
 php artisan storage:link
 php artisan golpobari:create-admin   # asks for name, email and a strong password
 npm run dev                     # or: npm run build
@@ -51,6 +52,12 @@ php artisan test
 ```
 
 16 feature tests (219 assertions) cover the full flow from browsing to publishing, expiry and renewal, plus the security checks: guest and staff access, login throttling, upload type checks, draft photo isolation, private pages, slug rules, HTML escaping and order lookup. They run on in-memory SQLite.
+
+### Templates
+
+Each layout is a Blade view in `resources/views/page-templates` plus an entry in `TemplateRegistry` (fields, theme, sample content and a **page map** in `guides()`). The page map lists the page's sections from top to bottom; the order form shows the customer one box per section, an example for every field, and a live preview that outlines exactly where each answer will appear. Mark the element that shows a field with `{{ $d->f('field_key') }}` so the preview can find it.
+
+After deploying new templates to a site that already has data, run `php artisan golpobari:sync-templates`. It adds new categories, templates and missing fields, and leaves templates you edited in the admin panel alone.
 
 ### Changing CSS or JS
 
