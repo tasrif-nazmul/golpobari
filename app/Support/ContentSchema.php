@@ -79,6 +79,7 @@ class ContentSchema
             'url' => [$req, 'url:http,https', 'max:300'],
             'phone' => [$req, 'string', 'max:25', 'regex:/^[0-9০-৯+\-\s()]{5,25}$/u'],
             'color' => [$req, 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'music' => ['nullable', 'string', Rule::in(array_merge(array_keys(TemplateRegistry::MUSIC), ['custom', 'none']))],
             'select' => array_values(array_filter([$req, 'string', 'max:80', ($c = data_get($f, 'options.choices', $f['choices'] ?? [])) ? Rule::in($c) : null])),
             default => [$req, 'string', 'max:'.($len ?: 255)],
         };

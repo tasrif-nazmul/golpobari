@@ -51,13 +51,23 @@ Admin panel: `http://127.0.0.1:8000/admin` (the path comes from `ADMIN_PATH`).
 php artisan test
 ```
 
-16 feature tests (219 assertions) cover the full flow from browsing to publishing, expiry and renewal, plus the security checks: guest and staff access, login throttling, upload type checks, draft photo isolation, private pages, slug rules, HTML escaping and order lookup. They run on in-memory SQLite.
+25 tests (327 assertions) cover the full flow from browsing to publishing, expiry and renewal, plus the security checks: guest and staff access, login throttling, upload type checks, draft photo isolation, private pages, slug rules, HTML escaping and order lookup. They run on in-memory SQLite.
 
 ### Templates
 
 Each layout is a Blade view in `resources/views/page-templates` plus an entry in `TemplateRegistry` (fields, theme, sample content and a **page map** in `guides()`). The page map lists the page's sections from top to bottom; the order form shows the customer one box per section, an example for every field, and a live preview that outlines exactly where each answer will appear. Mark the element that shows a field with `{{ $d->f('field_key') }}` so the preview can find it.
 
 After deploying new templates to a site that already has data, run `php artisan golpobari:sync-templates`. It adds new categories, templates and missing fields, and leaves templates you edited in the admin panel alone.
+
+### Music and preview images
+
+Every template has a **পেজের গান** (`music`) field. The six built-in songs in `public/audio/` are original pieces synthesised by `tools/music/synth.py`; rebuild them with `tools/music/build.sh` (needs Python with numpy, and ffmpeg). Customers can also upload their own MP3/M4A/OGG/WAV (up to 12 MB, checked by its first bytes). Pages start the song on the visitor's first tap, or when the cover opens, and show a small play/pause disc in the corner.
+
+The two-phone images on the template cards live in `public/images/previews/phone/`. After changing a template's design, regenerate them against a running local site:
+
+```bash
+node tools/previews/phones.cjs http://localhost:8000 romantic-story birthday-celebration
+```
 
 ### Changing CSS or JS
 

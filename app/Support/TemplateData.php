@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
@@ -90,11 +91,11 @@ class TemplateData
         return $this->media[$key] ?? [];
     }
 
-    public function date(string $key): ?\Carbon\Carbon
+    public function date(string $key): ?Carbon
     {
         $v = $this->text($key);
         try {
-            return $v ? \Carbon\Carbon::parse($v) : null;
+            return $v ? Carbon::parse($v) : null;
         } catch (\Throwable) {
             return null;
         }
@@ -135,7 +136,7 @@ class TemplateData
     {
         $out = [];
         foreach ($this->fields as $f) {
-            if (in_array($f['key'], $this->knownKeys, true) || in_array($f['key'], $this->placeholders, true) || ! $this->has($f['key'])) {
+            if ($f['type'] === 'music' || in_array($f['key'], $this->knownKeys, true) || in_array($f['key'], $this->placeholders, true) || ! $this->has($f['key'])) {
                 continue;
             }
             $out[] = ['field' => $f, 'value' => $this->content[$f['key']] ?? null, 'media' => $this->media[$f['key']] ?? []];

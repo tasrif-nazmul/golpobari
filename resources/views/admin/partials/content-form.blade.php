@@ -25,6 +25,8 @@
             </fieldset>
         @elseif ($f['type'] === 'textarea')
             <x-admin.field :name="$name" :label="$f['label'].($f['required'] ? ' *' : '')" type="textarea" :value="$val" rows="5" />
+        @elseif ($f['type'] === 'music')
+            <x-admin.field :name="$name" :label="$f['label']" type="select" :value="$val" :options="collect(\App\Support\TemplateRegistry::MUSIC)->map(fn ($t) => $t['icon'].' '.$t['title'])->all() + ['custom' => 'Customer upload', 'none' => 'No music']" />
         @elseif ($f['type'] === 'select')
             <x-admin.field :name="$name" :label="$f['label']" type="select" :value="$val" :options="['' => '—'] + array_combine($f['options']['choices'] ?? [], $f['options']['choices'] ?? [])" />
         @else

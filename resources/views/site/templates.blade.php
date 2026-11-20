@@ -1,6 +1,6 @@
 @extends('layouts.site')
 @section('content')
-@include('site.partials.page-hero', ['eyebrow' => 'টেমপ্লেট', 'title' => 'আপনার গল্পের পোশাক বাছুন', 'sub' => 'প্রিভিউ খুলে মোবাইল আর ডেস্কটপ দুইভাবেই দেখে নিন।'])
+@include('site.partials.page-hero', ['eyebrow' => 'টেমপ্লেট', 'title' => 'আপনার গল্পের পোশাক বাছুন', 'sub' => 'যেকোনো ডিজাইনে ছুঁয়ে লাইভ দেখুন: খাম খোলে, গান বাজে, ছবি নড়ে। পছন্দ হলে সেটা দিয়েই শুরু।'])
 <div class="sticky top-16 z-30 bg-paper/90 px-4 py-3 backdrop-blur sm:px-6 md:top-[4.5rem]">
     <nav class="container-x no-scrollbar flex gap-2 overflow-x-auto" aria-label="ক্যাটাগরি ফিল্টার">
         <a href="{{ route('templates.index') }}" class="chip shrink-0 !py-2 {{ ! $current ? '!bg-ink !text-paper' : 'bg-white ring-1 ring-ink/10' }}">সব</a>

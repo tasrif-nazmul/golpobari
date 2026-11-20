@@ -1,6 +1,11 @@
 @extends('page-templates._base')
 @section('body')
 @php $photo = $d->image('photo'); $reasons = $d->items('reasons'); $n = count($reasons); $palette = ['var(--t-primary)', 'var(--t-accent)', '#E76F51', '#2A9D8F', '#8E7DBE']; @endphp
+@include('page-templates.partials.gate', [
+    'style' => 'envelope', 'icon' => \App\Support\Bn::digits($n).'টা ❤', 'mode' => 'hearts', 'initial' => '♥',
+    'eyebrow' => $d->text('from_name') ? $d->text('from_name').' পাঠিয়েছে' : 'তোমার জন্য', 'title' => $d->text('to_name').', খামটা খোলো',
+    'btn' => 'সিলমোহর ছুঁয়ে খোলো',
+])
 <header class="relative overflow-hidden px-5 pb-12 pt-16 text-center sm:pt-24">
     <p class="font-heading t-reveal text-[9rem] font-extrabold leading-none t-accent sm:text-[12rem]">{{ \App\Support\Bn::digits($n) }}</p>
     <h1 class="font-heading -mt-4 text-4xl font-extrabold leading-tight t-primary sm:text-6xl" data-split {{ $d->f('title to_name') }}>{{ $d->text('title', $d->text('to_name').', তোমাকে ভালোবাসার কারণগুলো') }}</h1>

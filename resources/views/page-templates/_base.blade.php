@@ -42,6 +42,17 @@
 
 @include('page-templates.partials.extras')
 
+@if (! empty($music['src']))
+    <div class="t-music" data-music data-src="{{ $music['src'] }}" @if (! empty($isDraft)) data-manual @endif>
+        <button type="button" class="t-music__btn" data-music-toggle aria-pressed="false" aria-label="গান চালু করুন" title="{{ $music['title'] }}">
+            <span class="t-music__disc" aria-hidden="true"></span>
+            <span class="t-music__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <svg class="t-music__off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <span class="t-music__hint" data-music-hint>🎵 {{ $music['title'] }}</span>
+    </div>
+@endif
+
 @if ($showBranding)
     <footer class="t-branding"><a href="{{ url('/') }}" target="_blank" rel="noopener">{{ $brandingText }}</a></footer>
 @endif

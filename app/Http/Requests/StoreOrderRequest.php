@@ -4,9 +4,11 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentStatus;
 use App\Models\Package;
+use App\Models\Page;
 use App\Models\PageMedia;
 use App\Models\Payment;
 use App\Models\Template;
+use App\Support\Bn;
 use App\Support\ContentSchema;
 use App\Support\Phone;
 use App\Support\Settings;
@@ -109,7 +111,7 @@ class StoreOrderRequest extends FormRequest
             if ($slug = $this->input('desired_slug')) {
                 if (SlugRules::isReserved($slug)) {
                     $v->errors()->add('desired_slug', 'এই লিংকটি সংরক্ষিত। অন্য একটি নাম দিন।');
-                } elseif (\App\Models\Page::where('slug', $slug)->exists()) {
+                } elseif (Page::where('slug', $slug)->exists()) {
                     $v->errors()->add('desired_slug', 'এই লিংকটি আগেই নেওয়া হয়েছে। অন্য একটি নাম দিন।');
                 }
             }
@@ -136,8 +138,8 @@ class StoreOrderRequest extends FormRequest
                 (int) ($this->packageModel?->maxPhotos() ?: 999),
                 (int) ($this->templateModel->max_photos ?: 999),
             );
-            if ($owned->count() > $limit) {
-                $v->errors()->add('media', 'এই প্যাকেজে সর্বোচ্চ '.\App\Support\Bn::digits($limit).'টি ছবি দেওয়া যায়। কিছু ছবি বাদ দিন বা বড় প্যাকেজ নিন।');
+            if ($owned->where('field_key', '!=', 'music')->count() > $limit) {
+                $v->errors()->add('media', 'এই প্যাকেজে সর্বোচ্চ '.Bn::digits($limit).'টি ছবি দেওয়া যায়। কিছু ছবি বাদ দিন বা বড় প্যাকেজ নিন।');
             }
         }];
     }

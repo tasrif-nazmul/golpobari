@@ -18,6 +18,44 @@ class ImageService
 {
     private const MAX_PIXELS = 50_000_000; // refuse decompression bombs
 
+    public const AUDIO_MAX_KB = 12 * 1024;
+
+    /** Audio can't be re-encoded here, so it is checked by its magic bytes and only ever served with a fixed audio type. */
+    public static function sniffAudio(string $path): ?string
+    {
+        $h = (string) @file_get_contents($path, false, null, 0, 16);
+        if (strlen($h) < 12) {
+            return null;
+        }
+
+        return match (true) {
+            str_starts_with($h, 'ID3') => 'audio/mpeg',
+            ord($h[0]) === 0xFF && (ord($h[1]) & 0xE0) === 0xE0 && (ord($h[1]) & 0x06) !== 0 => 'audio/mpeg',
+            ord($h[0]) === 0xFF && (ord($h[1]) & 0xF6) === 0xF0 => 'audio/aac',
+            substr($h, 4, 4) === 'ftyp' => 'audio/mp4',
+            str_starts_with($h, 'OggS') => 'audio/ogg',
+            str_starts_with($h, 'RIFF') && substr($h, 8, 4) === 'WAVE' => 'audio/wav',
+            default => null,
+        };
+    }
+
+    public function storeAudioDraft(UploadedFile $file, string $draftToken): PageMedia
+    {
+        $mime = self::sniffAudio($file->getRealPath());
+        if (! $mime) {
+            throw new RuntimeException('এই ফাইলটি গান হিসেবে চেনা যাচ্ছে না। MP3 বা M4A দিন।');
+        }
+        $ext = ['audio/mpeg' => 'mp3', 'audio/aac' => 'aac', 'audio/mp4' => 'm4a', 'audio/ogg' => 'ogg', 'audio/wav' => 'wav'][$mime];
+        $path = 'drafts/'.$draftToken.'/'.Str::random(32).'.'.$ext;
+        $this->disk()->putFileAs(dirname($path), $file, basename($path));
+
+        return PageMedia::create([
+            'draft_token' => $draftToken, 'field_key' => 'music', 'path' => $path, 'thumb_path' => $path, 'mime' => $mime,
+            'original_name' => Str::limit($this->safeName($file->getClientOriginalName()), 120, ''),
+            'size' => $this->disk()->size($path), 'width' => null, 'height' => null, 'sort_order' => 0,
+        ]);
+    }
+
     public function disk()
     {
         return Storage::disk('uploads');

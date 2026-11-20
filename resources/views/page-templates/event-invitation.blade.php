@@ -2,10 +2,10 @@
 @section('body')
 @php $hero = $d->image('hero_photo'); $date = $d->date('event_date'); @endphp
 @include('page-templates.partials.gate', [
-    'icon' => '💌', 'mode' => 'confetti', 'eyebrow' => 'শুভ আমন্ত্রণ',
+    'style' => 'envelope', 'icon' => '🌼', 'mode' => 'confetti', 'eyebrow' => 'শুভ আমন্ত্রণ', 'seal' => '#8a1c2b', 'ribbon' => '#c99a2e', 'bg' => '#3d1f2b',
     'title' => $d->text('event_title'),
     'sub' => 'আপনার জন্য একটি দাওয়াতপত্র',
-    'btn' => 'দাওয়াতপত্র খুলুন',
+    'btn' => 'সিলমোহর ছুঁয়ে দাওয়াতপত্র খুলুন',
 ])
 <main class="t-grain relative overflow-hidden px-3 py-8 sm:py-16" data-confetti="#e8b04b,#6b2d5c,#ffffff,#d77a61">
     @include('page-templates.partials.particles', ['chars' => ['✿', '❀', '❁'], 'count' => 12, 'class' => 't-accent opacity-70'])

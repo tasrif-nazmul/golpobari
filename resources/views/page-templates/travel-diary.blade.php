@@ -1,6 +1,10 @@
 @extends('page-templates._base')
 @section('body')
 @php $cover = $d->image('cover_photo'); $travelers = $d->list('travelers'); $stamps = ['✈', '⛰', '🌊', '🏕', '🚂', '🛶']; @endphp
+@include('page-templates.partials.gate', [
+    'style' => 'book', 'eyebrow' => 'ভ্রমণের খাতা', 'title' => $d->text('trip_title'),
+    'sub' => $d->text('from_place').' → '.$d->text('to_place'), 'btn' => 'ডায়েরিটা খোলো', 'flower' => false, 'ribbon' => '#d9a441',
+])
 <header class="relative overflow-hidden px-4 pb-14 pt-10 sm:pt-16">
     <div class="pointer-events-none absolute inset-x-0 top-0 h-80" style="background: radial-gradient(70% 100% at 50% 0%, color-mix(in oklab, var(--t-accent) 35%, transparent), transparent)"></div>
 

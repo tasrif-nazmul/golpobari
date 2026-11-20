@@ -39,6 +39,32 @@ Alpine.data('copyText', (value) => ({
 
 Alpine.data('orderWizard', orderWizard);
 
+// The site's live template preview popup.
+Alpine.data('tplPreview', () => ({
+    item: null, loading: true,
+    open(d) { this.loading = true; this.item = d; document.documentElement.style.overflow = 'hidden'; },
+    close() { if (!this.item) return; this.item = null; document.documentElement.style.overflow = ''; },
+}));
+
+// Hero phone: cycles through a few templates.
+Alpine.data('heroPhones', (items = []) => ({
+    items, i: 0,
+    init() { if (items.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { this.i = (this.i + 1) % items.length; }, 4200); },
+    get cur() { return this.items[this.i] || {}; },
+}));
+
+// Little music sampler on the home page.
+Alpine.data('trackList', () => ({
+    playing: null, audio: null,
+    toggle(key, url) {
+        if (this.audio) { this.audio.pause(); }
+        if (this.playing === key) { this.playing = null; this.audio = null; return; }
+        this.audio = new Audio(url); this.audio.volume = 0.7; this.playing = key;
+        this.audio.play().catch(() => { this.playing = null; });
+        this.audio.onended = () => { this.playing = null; };
+    },
+}));
+
 // Scroll reveal: a single observer, removed once each element has been seen.
 const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
