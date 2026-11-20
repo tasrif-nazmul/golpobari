@@ -9,7 +9,7 @@
     <x-favicon />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Galada&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@500;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Galada&family=Tiro+Bangla:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@500;700;800&display=swap">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -38,7 +38,7 @@
             @else
                 <x-logo class="h-9 w-9 text-ink" />
                 <span class="leading-none">
-                    <span class="block font-fancy text-[1.6rem] leading-none">{{ $siteName }}</span>
+                    <span class="block font-brand text-[1.6rem] leading-none">{{ $siteName }}</span>
                     <span class="block font-serif text-[0.7rem] italic tracking-wide text-ink-mute">{{ $settings->get('site_name') }}</span>
                 </span>
             @endif
@@ -81,16 +81,12 @@
 
 @unless ($hideFooter ?? false)
 <footer class="night relative mt-16 overflow-hidden">
-    <div class="stars opacity-60"></div>
-    <svg aria-hidden="true" class="spin-slow pointer-events-none absolute -right-40 -top-40 h-[30rem] w-[30rem] text-gold/15" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
-        @for ($i = 0; $i < 16; $i++)<ellipse cx="100" cy="52" rx="13" ry="40" transform="rotate({{ $i * 22.5 }} 100 100)"/>@endfor
-        <circle cx="100" cy="100" r="28"/><circle cx="100" cy="100" r="96" stroke-dasharray="3 6"/>
-    </svg>
+    <x-kantha type="lotus" class="pointer-events-none absolute -right-24 -top-24 h-80 w-80 text-holud/25 [--k2:rgb(181_51_43/.45)]" />
     <div class="container-x relative grid gap-10 px-4 pb-12 pt-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
             <div class="flex items-center gap-2.5 text-paper">
                 <x-logo class="h-10 w-10" />
-                <span class="font-fancy text-3xl">{{ $siteName }}</span>
+                <span class="font-brand text-3xl">{{ $siteName }}</span>
             </div>
             <p class="mt-4 max-w-xs font-display text-lg text-paper">{{ $settings->get('tagline') }}</p>
             <p class="mt-1 font-serif text-sm italic text-paper/60">{{ $settings->get('tagline_en') }}</p>
@@ -144,7 +140,7 @@
                     <button type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10" @click="close()" aria-label="বন্ধ করুন"><x-icon name="x" class="h-5 w-5" /></button>
                 </div>
                 <div class="relative min-h-0 flex-1 bg-white sm:flex-none sm:bg-transparent">
-                    <div class="pv-frame h-full">
+                    <div class="pv-frame max-sm:h-full">
                         <div class="pv-screen relative h-full">
                             <div x-show="loading" class="absolute inset-0 z-10 grid place-items-center bg-paper text-ink-mute"><span class="animate-pulse">প্রিভিউ আসছে…</span></div>
                             <iframe :src="item.render" class="block h-full w-full border-0 bg-white" :title="item.name + ' লাইভ প্রিভিউ'" allow="autoplay" @load="loading = false"></iframe>

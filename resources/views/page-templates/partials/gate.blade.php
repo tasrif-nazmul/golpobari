@@ -28,6 +28,27 @@
         </button>
         <p class="t-cover-hint"><span aria-hidden="true">👆</span> {{ $btn ?? 'সিলমোহর ছুঁয়ে খোলো' }}</p>
     </div>
+@elseif ($style === 'gift')
+    <div class="t-cover-cloth" aria-hidden="true"></div>
+    <div class="t-gate__inner">
+        @if (! empty($eyebrow))<p class="t-cover-eyebrow">{{ $eyebrow }}</p>@endif
+        <p class="t-cover-title">{{ $title }}</p>
+        <button type="button" class="t-gift" data-gate-open aria-label="{{ $btn ?? 'উপহার খোলো' }}">
+            <span class="t-gift__shadow"></span>
+            <span class="t-gift__box"></span>
+            <span class="t-gift__rib t-gift__rib--v"></span>
+            <span class="t-gift__lid"><span class="t-gift__rib t-gift__rib--lid"></span></span>
+            <svg class="t-gift__bow" viewBox="0 0 120 70" aria-hidden="true">
+                <defs><linearGradient id="gbGift" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>
+                <path d="M60 40C40 10 8 4 8 24c0 16 28 20 52 16Z" fill="var(--ribbon)"/><path d="M60 40C40 10 8 4 8 24c0 16 28 20 52 16Z" fill="url(#gbGift)"/>
+                <path d="M60 40c20-30 52-36 52-16 0 16-28 20-52 16Z" fill="var(--ribbon)"/><path d="M60 40c20-30 52-36 52-16 0 16-28 20-52 16Z" fill="url(#gbGift)"/>
+                <path d="M26 20c10 4 22 12 30 18M94 20c-10 4-22 12-30 18" stroke="#000" stroke-opacity=".18" stroke-width="2" fill="none"/>
+                <ellipse cx="60" cy="40" rx="9" ry="9.5" fill="var(--ribbon)"/><ellipse cx="60" cy="40" rx="9" ry="9.5" fill="url(#gbGift)"/>
+            </svg>
+            <span class="t-gift__tag"><span>{{ $sub ?? '' }}</span></span>
+        </button>
+        <p class="t-cover-hint"><span aria-hidden="true">👆</span> {{ $btn ?? 'ফিতে টেনে উপহার খোলো' }}</p>
+    </div>
 @elseif ($style === 'book')
     <div class="t-cover-cloth" aria-hidden="true"></div>
     <div class="t-gate__inner">

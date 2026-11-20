@@ -47,7 +47,15 @@ class SyncTemplates extends Command
                 $this->line("• New template: {$t->name} ({$t->slug})");
             }
 
-            // 3. Fields a layout has that a template is missing (e.g. after a layout gained a field).
+            // 3. Templates still carrying their original English name get the Bangla one.
+            $bangla = collect(CatalogSeeder::templates())->pluck(2, 1);
+            foreach (CatalogSeeder::OLD_NAMES as $slug => $old) {
+                if (($new = $bangla[$slug] ?? null) && Template::where('slug', $slug)->where('name', $old)->update(['name' => $new])) {
+                    $this->line("• {$slug}: renamed to {$new}");
+                }
+            }
+
+            // 4. Fields a layout has that a template is missing (e.g. after a layout gained a field).
             foreach (Template::with('fields')->get() as $t) {
                 $have = $t->fields->pluck('key')->all();
                 $next = (int) $t->fields->max('sort_order');
@@ -63,7 +71,7 @@ class SyncTemplates extends Command
                     $this->line("• {$t->slug}: added field {$f['key']}");
                 }
 
-                // 4. Built-in preview images that ship with the code.
+                // 5. Built-in preview images that ship with the code.
                 $img = "images/previews/{$t->slug}.webp";
                 if (file_exists(public_path($img)) && (! $t->preview_path || str_starts_with($t->preview_path, 'images/previews/')) && $t->preview_path !== $img) {
                     $t->update(['preview_path' => $img]);

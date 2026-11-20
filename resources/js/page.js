@@ -143,7 +143,7 @@ const gate = () => {
     const g = document.querySelector('[data-gate]'); if (!g) return;
     if (isDraft) { g.remove(); return; }
     document.documentElement.classList.add('has-gate');
-    const tactile = ['envelope', 'book'].includes(g.dataset.gateStyle);
+    const tactile = ['envelope', 'book', 'gift'].includes(g.dataset.gateStyle);
     const hold = reduce ? 0 : (g.dataset.gateStyle === 'book' ? 1650 : 1450);
     const open = () => {
         document.dispatchEvent(new CustomEvent('gb:opening'));

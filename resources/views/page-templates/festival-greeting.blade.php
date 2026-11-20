@@ -12,7 +12,16 @@
     $photo = $d->image('photo');
     $icon = ['eid' => '🌙', 'boishakh' => '🪘', 'puja' => '🪔', 'xmas' => '🎄', 'newyear' => '🎆'][$kind];
 @endphp
-@include('page-templates.partials.gate', ['icon' => $icon, 'mode' => 'confetti', 'eyebrow' => $d->text('to_name') ?: 'আপনার জন্য', 'title' => $fest, 'sub' => $d->text('from_name').'-এর পক্ষ থেকে', 'btn' => 'শুভেচ্ছা খুলুন'])
+@php
+    $cover = [
+        'eid' => ['paper' => '#f2ead6', 'ribbon' => '#c9a13b', 'seal' => '#1f5c4a', 'bg' => '#0f3b33', 'initial' => '☾'],
+        'boishakh' => ['paper' => '#fbf4e6', 'ribbon' => '#c1121f', 'seal' => '#a4161a', 'bg' => '#6b0f14', 'initial' => 'শ'],
+        'puja' => ['paper' => '#fbefd9', 'ribbon' => '#d4421f', 'seal' => '#b23a1d', 'bg' => '#5a1a0e', 'initial' => '✦'],
+        'xmas' => ['paper' => '#f6efe4', 'ribbon' => '#b3202c', 'seal' => '#1f5132', 'bg' => '#163a28', 'initial' => '✦'],
+        'newyear' => ['paper' => '#f4efe6', 'ribbon' => '#d6b25e', 'seal' => '#2a2a5a', 'bg' => '#16163a', 'initial' => '✦'],
+    ][$kind];
+@endphp
+@include('page-templates.partials.gate', $cover + ['style' => 'envelope', 'mode' => 'confetti', 'eyebrow' => $d->text('to_name') ?: 'আপনার জন্য', 'title' => $fest, 'btn' => 'সিলমোহর ছুঁয়ে শুভেচ্ছা খুলুন'])
 
 <header class="relative overflow-hidden px-5 pb-16 pt-28 text-center {{ $kind === 'boishakh' ? 't-dhol-bg' : '' }}" data-confetti="#e8b931,#ffffff,#d1495b,#66a182">
     @if ($kind === 'eid')

@@ -5,7 +5,7 @@
     <nav class="container-x no-scrollbar flex gap-2 overflow-x-auto" aria-label="ক্যাটাগরি ফিল্টার">
         <a href="{{ route('templates.index') }}" class="chip shrink-0 !py-2 {{ ! $current ? '!bg-ink !text-paper' : 'bg-white ring-1 ring-ink/10' }}">সব</a>
         @foreach ($categories as $c)
-            <a href="{{ route('templates.index', ['category' => $c->slug]) }}" class="chip shrink-0 !py-2 {{ $current?->id === $c->id ? '!bg-ink !text-paper' : 'bg-white ring-1 ring-ink/10' }}">{{ $c->emoji }} {{ $c->displayName() }}</a>
+            <a href="{{ route('templates.index', ['category' => $c->slug]) }}" class="chip shrink-0 !py-2 {{ $current?->id === $c->id ? '!bg-ink !text-paper' : 'bg-white ring-1 ring-ink/10' }}">{{ $c->displayName() }}</a>
         @endforeach
     </nav>
 </div>
