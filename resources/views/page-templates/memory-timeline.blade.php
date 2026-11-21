@@ -54,6 +54,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     @if ($d->has('closing_message'))
         <section class="t-reveal relative mx-auto mt-24 max-w-xl rounded-[2rem] bg-primary px-8 py-12 text-center text-white" {{ $d->f('closing_message') }}>
             <p class="text-4xl" aria-hidden="true">💛</p>

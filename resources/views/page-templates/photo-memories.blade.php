@@ -42,6 +42,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     <section class="t-reveal mx-auto mt-24 max-w-xl text-center" {{ $d->f('closing_note') }}>
         @if ($d->has('closing_note'))<div class="font-accent t-prose text-3xl leading-snug t-accent">{{ $d->para('closing_note') }}</div>@endif
         <p class="font-heading mt-12 text-6xl">সমাপ্ত</p>

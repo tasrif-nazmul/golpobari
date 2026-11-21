@@ -44,6 +44,7 @@
             </section>
         @endif
 
+    @include('page-templates.partials.surprises')
         @if ($d->has('closing_message'))
             <section class="t-reveal mx-auto mt-24 max-w-xl rounded-[2rem] bg-primary px-8 py-12 text-white" {{ $d->f('closing_message from_name') }}>
                 <div class="t-prose text-xl leading-loose">{{ $d->para('closing_message') }}</div>

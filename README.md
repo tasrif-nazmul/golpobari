@@ -71,6 +71,10 @@ node tools/previews/phones.cjs http://localhost:8000 romantic-story birthday-cel
 
 Sample photos in template previews are free [Unsplash](https://unsplash.com/license) photos of Bangladeshi people and places, saved as `public/images/samples/<name>.webp`. Each one's page and photographer is in `tools/photos/sources.json` and `public/images/samples/CREDITS.md`; `python3 tools/photos/fetch.py` downloads them again. A name without a `.webp` falls back to the drawn `.svg`. To give one template different photos from its layout, add it to `TemplateRegistry::SAMPLE_PHOTOS`.
 
+### Surprise sections
+
+Personal pages (love, birthday, family, friends, festival, tribute) also get optional surprise sections from `App\Support\Surprises`: a quiz with a score, a memory jar that hands out one note per tap, open-when letters, coupons that get a “used” stamp, and a final message that opens when the visitor holds a button. Each one shows only when the customer fills it in. `Surprises::LAYOUTS` sets which layout gets which, and the order form groups them under “ভেতরের চমক”. They are drawn by `partials/surprises.blade.php` and run by the matching code in `resources/js/page.js`.
+
 ### Changing CSS or JS
 
 Edit files in `resources/`, run `npm run build`, and **commit `public/build`**. Production serves those files directly.

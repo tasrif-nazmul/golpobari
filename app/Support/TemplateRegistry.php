@@ -87,6 +87,13 @@ class TemplateRegistry
         }
         $cache = self::baseLayouts();
         foreach ($cache as $key => &$layout) {
+            $have = array_column($layout['fields'], 'key');
+            foreach (Surprises::fields($key, fn (...$a) => self::f(...$a)) as $f) {
+                if (! in_array($f['key'], $have, true)) {
+                    $layout['fields'][] = $f;
+                }
+            }
+            $layout['sample'] += Surprises::sample($key);
             $layout['fields'][] = self::musicField($key);
             $layout['sample']['music'] = self::defaultMusic($key);
         }
@@ -153,6 +160,11 @@ class TemplateRegistry
         if (in_array('music', $keys, true) && ! in_array('music', $placed, true)) {
             $placed[] = 'music';
             $music = ['title' => 'পেজের গান', 'where' => 'পেজ খুললেই পেছনে হালকা করে বাজবে, কোণে থাকবে চালু/বন্ধের বোতাম', 'icon' => '🎵', 'fields' => ['music']];
+        }
+        $fun = array_values(array_diff(array_intersect(Surprises::keys($layout), $keys), $placed));
+        if ($fun) {
+            $placed = array_merge($placed, $fun);
+            $out[] = ['title' => 'ভেতরের চমক', 'where' => 'পেজের শেষের দিকে: কুইজ, স্মৃতির বয়াম, চিঠি, কুপন আর চেপে ধরলে খোলা শেষ চমক। যেটা ফাঁকা রাখবেন, সেটা দেখাবে না।', 'icon' => '🎁', 'fields' => $fun];
         }
         $rest = array_values(array_diff($keys, $placed));
         if ($rest) {

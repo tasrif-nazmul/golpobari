@@ -60,6 +60,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     <section class="t-reveal t-nakshi relative mx-auto mt-24 max-w-2xl rounded-[2rem] px-8 py-14 text-center" style="background: color-mix(in oklab, var(--t-accent) 12%, transparent)" {{ $d->f('message') }}>
         @include('page-templates.partials.alpona', ['rings' => 1, 'petals' => 12, 'class' => 'mx-auto h-16 w-16'])
         <div class="t-prose font-heading mt-6 text-2xl leading-relaxed sm:text-3xl">{{ $d->para('message') }}</div>

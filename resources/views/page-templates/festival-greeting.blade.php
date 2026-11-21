@@ -64,5 +64,6 @@
     @endif
 
     <div class="mt-16 text-center"><button type="button" class="t-btn t-btn--accent" data-burst="{{ $icon }}">{{ $icon }} শুভেচ্ছা ফেরত পাঠাও</button></div>
+    @include('page-templates.partials.surprises')
 </main>
 @endsection
