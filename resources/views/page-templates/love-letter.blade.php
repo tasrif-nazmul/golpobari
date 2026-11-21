@@ -49,5 +49,6 @@
             <button type="button" class="t-btn t-btn--primary" data-burst="💋">💋 একটা চুমু পাঠাও</button>
         </div>
     </article>
+    @include('page-templates.partials.surprises')
 </main>
 @endsection

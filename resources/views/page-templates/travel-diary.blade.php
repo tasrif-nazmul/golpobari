@@ -79,6 +79,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     @if ($d->has('closing_note'))
         <section class="t-reveal mx-auto mt-24 max-w-xl text-center" {{ $d->f('closing_note') }}>
             <span class="t-stamp text-lg t-primary">পরের গন্তব্য?</span>

@@ -32,6 +32,7 @@
         </div>
     </section>
 
+    @include('page-templates.partials.surprises')
     <section id="ask" class="relative mx-auto mt-20 max-w-xl" {{ $d->f('question') }}>
         <div class="t-ring"></div>
         <h2 class="font-accent mt-10 text-4xl font-bold leading-tight sm:text-5xl">{{ $d->text('question', 'তুমি কি আমার হবে?') }}</h2>

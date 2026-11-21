@@ -87,6 +87,28 @@ class TemplatesTest extends TestCase
         $this->assertSame(['music'], collect($guide['sections'])->firstWhere('title', 'পেজের গান')['fields']);
     }
 
+    public function test_personal_pages_get_surprise_sections_that_hide_when_empty(): void
+    {
+        $romantic = Template::with('fields')->where('slug', 'romantic-story')->firstOrFail();
+        $html = $this->get(route('templates.render', $romantic))->assertOk()->getContent();
+        foreach (['data-quiz', 'data-jar', 'data-coupon', 'data-hold'] as $hook) {
+            $this->assertStringContainsString($hook, $html);
+        }
+        $this->assertMatchesRegularExpression('/data-quiz-opt\s+data-ok\s*>কাচ্চি বিরিয়ানি</', $html);
+        $guide = TemplateRegistry::guide('romantic-story', TemplateRegistry::layouts()['romantic-story']['fields']);
+        $this->assertSame(['quiz', 'memory_jar', 'open_when', 'coupons', 'secret_message'], collect($guide['sections'])->firstWhere('title', 'ভেতরের চমক')['fields']);
+
+        $tribute = $this->get(route('templates.render', Template::where('slug', 'tribute')->firstOrFail()))->getContent();
+        $this->assertStringContainsString('data-jar', $tribute);
+        $this->assertStringNotContainsString('data-quiz', $tribute);
+
+        // A customer who skips them gets a page without them.
+        $content = ['your_name' => 'A', 'their_name' => 'B', 'story' => 'x', 'special_message' => 'y', 'quiz' => [], 'secret_message' => ''];
+        $empty = app(\App\Services\PageRenderer::class)->forDraft($romantic, $content, collect())->render();
+        $this->assertStringNotContainsString('data-quiz', $empty);
+        $this->assertStringNotContainsString('data-hold', $empty);
+    }
+
     public function test_customers_can_upload_their_own_song_but_not_a_disguised_file(): void
     {
         Storage::fake('uploads');

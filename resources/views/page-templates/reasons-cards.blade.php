@@ -37,6 +37,7 @@
         @endforeach
     </div>
 
+    @include('page-templates.partials.surprises')
     @if ($d->has('closing_message'))
         <section class="t-reveal mx-auto mt-24 max-w-xl text-center" {{ $d->f('closing_message from_name') }}>
             <p class="text-5xl" aria-hidden="true">💛</p>

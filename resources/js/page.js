@@ -402,10 +402,93 @@ const lightbox = () => {
     lb.addEventListener('touchend', (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) show(idx + (dx < 0 ? 1 : -1)); x0 = null; });
 };
 
+/* ---------- surprises ---------- */
+// Quiz: <div data-quiz> with [data-quiz-q] blocks of [data-quiz-opt] buttons (the right one has data-ok).
+const quizzes = () => $$('[data-quiz]').forEach((quiz) => {
+    const qs = $$('[data-quiz-q]', quiz), end = quiz.querySelector('[data-quiz-end]'), bar = quiz.querySelector('[data-quiz-bar]');
+    let at = 0, score = 0;
+    const shuffle = (q) => { const box = q.querySelector('[data-quiz-opts]'); Array.from(box.children).sort(() => Math.random() - 0.5).forEach((b) => box.appendChild(b)); };
+    const show = (i) => { qs.forEach((q, k) => (q.hidden = k !== i)); end.hidden = i < qs.length; bar.style.width = (Math.min(i, qs.length) / qs.length) * 100 + '%'; };
+    const finish = () => {
+        show(qs.length);
+        const ratio = score / qs.length;
+        quiz.querySelector('[data-quiz-score]').textContent = bn(score);
+        quiz.querySelector('[data-quiz-emoji]').textContent = ratio === 1 ? '🏆' : ratio >= 0.5 ? '🥰' : '🙈';
+        quiz.querySelector('[data-quiz-msg]').textContent = ratio === 1 ? 'সব ঠিক! তুমি আমাকে পুরোপুরি চেনো।' : ratio >= 0.5 ? 'বেশ ভালো! তবে আরও একটু চিনতে হবে।' : 'হায় হায়! আমাদের আরও অনেক গল্প করা দরকার।';
+        if (ratio >= 0.5) { const r = quiz.getBoundingClientRect(); confetti({ y: r.top + 80 }); }
+    };
+    qs.forEach((q) => { shuffle(q); $$('[data-quiz-opt]', q).forEach((b) => b.addEventListener('click', () => {
+        const ok = b.hasAttribute('data-ok');
+        $$('[data-quiz-opt]', q).forEach((o) => { o.disabled = true; if (o.hasAttribute('data-ok')) o.classList.add('is-right'); });
+        if (ok) { score++; const r = b.getBoundingClientRect(); floatUp(r.left + r.width / 2, r.top, '✨', 8); } else b.classList.add('is-wrong');
+        setTimeout(() => (++at < qs.length ? show(at) : finish()), 1100);
+    })); });
+    quiz.querySelector('[data-quiz-again]')?.addEventListener('click', () => {
+        at = 0; score = 0;
+        qs.forEach((q) => { shuffle(q); $$('[data-quiz-opt]', q).forEach((o) => { o.disabled = false; o.classList.toggle('is-right', false); o.classList.toggle('is-wrong', false); }); });
+        show(0);
+    });
+    show(0);
+});
+
+// Memory jar: tap to pull one random note at a time from <template data-jar-notes>.
+const jars = () => $$('[data-jar]').forEach((jar) => {
+    const all = Array.from(jar.querySelector('[data-jar-notes]').content.querySelectorAll('p')).map((p) => p.textContent);
+    const out = jar.querySelector('[data-jar-out]'), left = jar.querySelector('[data-jar-left]'), btn = jar.querySelector('[data-jar-open]');
+    let pool = [];
+    btn.addEventListener('click', () => {
+        if (!pool.length) pool = all.map((_, i) => i).sort(() => Math.random() - 0.5);
+        out.textContent = all[pool.pop()]; out.hidden = false;
+        out.classList.toggle('is-new', false); void out.offsetWidth; out.classList.add('is-new');
+        left.textContent = pool.length ? `আরও ${bn(pool.length)}টা চিরকুট বাকি` : 'সবগুলো পড়া শেষ! আবার ট্যাপ করলে প্রথম থেকে';
+        const r = btn.getBoundingClientRect(); floatUp(r.left + r.width / 2, r.top + 20, '✦', 6);
+    });
+});
+
+// Coupons: tap to stamp "used"; remembered on this device.
+const coupons = () => {
+    const key = 'gb-coupons:' + location.pathname;
+    let used = []; try { used = JSON.parse(localStorage.getItem(key) || '[]'); } catch { used = []; }
+    $$('[data-coupon]').forEach((c) => {
+        const id = c.dataset.coupon;
+        const set = (on) => { c.classList.toggle('is-used', on); c.setAttribute('aria-pressed', on); };
+        set(used.includes(id));
+        c.addEventListener('click', () => {
+            const on = !c.classList.contains('is-used'); set(on);
+            used = on ? [...new Set([...used, id])] : used.filter((x) => x !== id);
+            try { localStorage.setItem(key, JSON.stringify(used)); } catch { /* private mode */ }
+            if (on) { const r = c.getBoundingClientRect(); floatUp(r.right - 60, r.top + r.height / 2, '🎉', 8); }
+        });
+    });
+};
+
+// Hold to reveal: press and hold [data-hold-btn] for ~1.6s (keyboard: Enter/Space opens at once).
+const holds = () => $$('[data-hold]').forEach((box) => {
+    const btn = box.querySelector('[data-hold-btn]'), ring = box.querySelector('[data-hold-ring]'), secret = box.querySelector('[data-hold-secret]'), hint = box.querySelector('[data-hold-hint]');
+    const LEN = 340, DUR = reduce ? 300 : 1600;
+    let start = 0, raf = 0, done = false;
+    const paint = (p) => (ring.style.strokeDashoffset = LEN * (1 - p));
+    const open = () => {
+        if (done) return; done = true; cancelAnimationFrame(raf);
+        box.classList.add('is-open'); secret.hidden = false; if (hint) hint.hidden = true;
+        const r = secret.getBoundingClientRect();
+        confetti({ y: Math.max(80, r.top) }); floatUp(innerWidth / 2, r.top + 40, btn.textContent.trim() || '❤', 16);
+        if (navigator.vibrate) navigator.vibrate(60);
+    };
+    const tick = (t) => { const p = Math.min(1, (t - start) / DUR); paint(p); if (p >= 1) open(); else raf = requestAnimationFrame(tick); };
+    const down = (e) => { if (done) return; e.preventDefault(); btn.classList.add('is-holding'); start = performance.now(); raf = requestAnimationFrame(tick); };
+    const up = () => { if (done) return; btn.classList.toggle('is-holding', false); cancelAnimationFrame(raf); ring.style.transition = 'stroke-dashoffset .4s'; paint(0); setTimeout(() => (ring.style.transition = ''), 400); };
+    btn.addEventListener('pointerdown', down);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, up));
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    if (isDraft) { done = true; box.classList.add('is-open'); secret.hidden = false; if (hint) hint.hidden = true; }
+});
+
 document.documentElement.classList.remove('no-js');
 const boot = () => {
     split(); reveal(); typewriter(); counters(); countdowns(); bursts(); envelopes(); flips(); shuffles(); scratches();
-    giftboxes(); candles(); proposal(); sequences(); lamps(); copies(); draws(); tilts(); progress(); lightbox(); gate(); music();
+    giftboxes(); candles(); proposal(); sequences(); lamps(); copies(); quizzes(); jars(); coupons(); holds(); draws(); tilts(); progress(); lightbox(); gate(); music();
     // Pages without a gate still get their confetti welcome.
     if (!document.querySelector('[data-gate]') && document.querySelector('[data-confetti]') && !isDraft) setTimeout(() => confetti(), 500);
     window.gbConfetti = confetti;

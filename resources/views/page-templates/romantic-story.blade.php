@@ -88,6 +88,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     <section class="t-reveal relative mx-auto mt-24 max-w-2xl overflow-hidden rounded-[2.4rem] bg-primary px-7 pb-12 pt-14 text-center text-white sm:px-12" {{ $d->f('special_message') }}>
         @include('page-templates.partials.particles', ['chars' => ['♥'], 'count' => 10, 'rise' => true, 'class' => 'opacity-40'])
         <p class="font-heading relative text-5xl t-accent">{{ $d->text('their_name') }},</p>

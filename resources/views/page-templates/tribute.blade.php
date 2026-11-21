@@ -41,6 +41,7 @@
         </section>
     @endif
 
+    @include('page-templates.partials.surprises')
     <section class="t-reveal mx-auto mt-24 max-w-xl rounded-[2rem] bg-primary px-8 py-12 text-center text-white" {{ $d->f('prayer from_family') }}>
         @if ($d->has('prayer'))<div class="font-heading t-prose text-2xl leading-relaxed sm:text-3xl">{{ $d->para('prayer') }}</div>@endif
         @if ($d->has('from_family'))<p class="mt-6 text-white/75">— {{ $d->text('from_family') }}</p>@endif

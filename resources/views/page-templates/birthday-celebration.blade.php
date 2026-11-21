@@ -105,5 +105,6 @@
     @endif
 
     <div class="mt-20 text-center"><button type="button" class="t-btn t-btn--primary" onclick="window.gbConfetti && window.gbConfetti()">🎊 আরেকবার সেলিব্রেট!</button></div>
+    @include('page-templates.partials.surprises')
 </main>
 @endsection
